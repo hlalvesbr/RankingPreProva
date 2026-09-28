@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using RankingPreProva.Components;
 using RankingPreProva.Data;
+using RankingPreProva.Repositories;
+using RankingPreProva.Services;
 
 namespace RankingPreProva
 {
@@ -17,6 +19,10 @@ namespace RankingPreProva
             // Configure PostgreSQL with Entity Framework Core.
             builder.Services.AddDbContext<RankingPreProvaDbContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+            // Register repositories and services.
+            builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+            builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 
             var app = builder.Build();
 

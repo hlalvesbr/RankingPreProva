@@ -1,0 +1,103 @@
+@page "/perfil"
+@page "/perfil/{Id:int}"
+@using RankingPreProva.Models
+@using RankingPreProva.Services
+@inject IUsuarioService UsuarioService
+@rendermode InteractiveServer
+
+<PageTitle>Atualizar Perfil</PageTitle>
+
+<h1>Atualizar Perfil</h1>
+
+@if (carregando)
+{
+    <p><em>Carregando...</em></p>
+}
+else if (usuario is null)
+{
+    <div class="alert alert-warning" role="alert">
+        Usuário não encontrado.
+    </div>
+}
+else
+{
+    <EditForm Model="usuario" OnValidSubmit="SalvarAsync" FormName="perfilUsuario">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        @if (!string.IsNullOrEmpty(mensagemErro))
+        {
+            <div class="alert alert-danger" role="alert">@mensagemErro</div>
+        }
+
+        @if (!string.IsNullOrEmpty(mensagemSucesso))
+        {
+            <div class="alert alert-success" role="alert">@mensagemSucesso</div>
+        }
+
+        <div class="mb-3">
+            <label for="apelido" class="form-label">Apelido</label>
+            <InputText id="apelido" class="form-control" @bind-Value="usuario.Apelido" />
+            <ValidationMessage For="() => usuario.Apelido" />
+        </div>
+
+        <div class="mb-3">
+            <label for="nome" class="form-label">Nome</label>
+            <InputText id="nome" class="form-control" @bind-Value="usuario.Nome" />
+            <ValidationMessage For="() => usuario.Nome" />
+        </div>
+
+        <div class="mb-3">
+            <label for="email" class="form-label">E-mail</label>
+            <InputText id="email" class="form-control" @bind-Value="usuario.Email" />
+            <ValidationMessage For="() => usuario.Email" />
+        </div>
+
+        <button type="submit" class="btn btn-primary" disabled="@salvando">
+            @(salvando ? "Salvando..." : "Salvar")
+        </button>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Usuario? usuario;
+    private bool carregando = true;
+    private bool salvando;
+    private string? mensagemErro;
+    private string? mensagemSucesso;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        carregando = true;
+        usuario = await UsuarioService.ObterPerfilAsync(Id);
+        carregando = false;
+    }
+
+    private async Task SalvarAsync()
+    {
+        if (usuario is null)
+        {
+            return;
+        }
+
+        salvando = true;
+        mensagemErro = null;
+        mensagemSucesso = null;
+
+        var (sucesso, erro) = await UsuarioService.AtualizarPerfilAsync(usuario);
+
+        if (sucesso)
+        {
+            mensagemSucesso = "Perfil atualizado com sucesso.";
+        }
+        else
+        {
+            mensagemErro = erro;
+        }
+
+        salvando = false;
+    }
+}
