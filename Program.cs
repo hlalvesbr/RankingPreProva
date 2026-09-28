@@ -23,6 +23,8 @@ namespace RankingPreProva
             // Register repositories and services.
             builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
             builder.Services.AddScoped<IUsuarioService, UsuarioService>();
+            builder.Services.AddScoped<IQuestaoRepository, QuestaoRepository>();
+            builder.Services.AddScoped<IQuestaoService, QuestaoService>();
 
             var app = builder.Build();
 
