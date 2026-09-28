@@ -1,0 +1,23 @@
+@inject SessaoState Sessao
+
+<details class="menu-usuario">
+    <summary>
+        <Avatar Nome="@(Sessao.Usuario?.Nome ?? "?")" Url="@Sessao.Usuario?.AvatarUrl" Tamanho="36" />
+    </summary>
+    <div class="menu-usuario-painel">
+        @if (Sessao.Usuario is { } u)
+        {
+            <div class="menu-usuario-topo">
+                <strong>@u.Nome</strong>
+                <small>@u.Email</small>
+                <small class="titulo-nivel">Nível @u.Nivel · @Niveis.Titulo(u.Nivel)</small>
+            </div>
+        }
+        <a href="/perfil">👤 Meu perfil</a>
+        <a href="/badges">🏅 Conquistas</a>
+        <a href="/historico">📈 Histórico</a>
+        <a href="/favoritos">⭐ Favoritos</a>
+        <hr />
+        <a href="/account/logout" target="_top">🚪 Sair</a>
+    </div>
+</details>

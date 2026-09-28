@@ -1,0 +1,71 @@
+@inject IJSRuntime JS
+
+@if (Ranking is null)
+{
+    <Carregando Texto="Carregando ranking…" />
+}
+else if (Ranking.Itens.Count == 0)
+{
+    <div class="estado-vazio" style="padding:24px">
+        <div class="estado-icone animar-flutuar">🏆</div>
+        <p>Ninguém fez esta prova ainda. O primeiro lugar está esperando por você!</p>
+    </div>
+}
+else
+{
+    <div class="podio">
+        @foreach (var r in Ranking.Itens.Take(3))
+        {
+            <div class="podio-lugar podio-@r.Posicao">
+                @if (r.Posicao == 1) { <span class="podio-coroa">👑</span> }
+                <Avatar Nome="@r.Nome" Url="@r.AvatarUrl" Tamanho="@(r.Posicao == 1 ? 56 : 44)" />
+                <a href="/perfil/@(r.Apelido ?? r.UsuarioId.ToString())" class="negrito">@r.Nome</a>
+                <span class="pequeno suave">@UiExtensions.Nota(r.Nota) pts · @TextoUtil.Duracao(r.DuracaoSeg)</span>
+                <div class="podio-bloco">@r.Posicao</div>
+            </div>
+        }
+    </div>
+
+    <table class="tabela">
+        <thead>
+            <tr><th>#</th><th>Candidato</th><th class="num">Nota</th><th class="num">Acertos</th><th class="num">Tempo</th><th>Data</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var r in Ranking.Itens)
+            {
+                <tr class="@(r.EhVoce ? "voce" : "")">
+                    <td class="medalha">@UiExtensions.Medalha(r.Posicao)</td>
+                    <td>
+                        <span class="linha" style="gap:8px">
+                            <Avatar Nome="@r.Nome" Url="@r.AvatarUrl" Tamanho="26" />
+                            <a href="/perfil/@(r.Apelido ?? r.UsuarioId.ToString())">@r.Nome</a>
+                            <span class="etiqueta">Nv @r.Nivel</span>
+                            @if (r.EhVoce) { <span class="etiqueta etiqueta-alerta">você</span> }
+                        </span>
+                    </td>
+                    <td class="num">@UiExtensions.Nota(r.Nota) / @UiExtensions.Nota(Ranking.NotaMaxima)</td>
+                    <td class="num">@r.Acertos</td>
+                    <td class="num">@TextoUtil.Duracao(r.DuracaoSeg)</td>
+                    <td>@UiExtensions.DataCurta(r.Data)</td>
+                </tr>
+            }
+            @if (Ranking.Voce is { } v && Ranking.Itens.All(i => !i.EhVoce))
+            {
+                <tr><td colspan="6" class="suave" style="text-align:center">⋯</td></tr>
+                <tr class="voce">
+                    <td>@v.Posicao º</td>
+                    <td>@v.Nome <span class="etiqueta etiqueta-alerta">você</span></td>
+                    <td class="num">@UiExtensions.Nota(v.Nota)</td>
+                    <td class="num">@v.Acertos</td>
+                    <td class="num">@TextoUtil.Duracao(v.DuracaoSeg)</td>
+                    <td>@UiExtensions.DataCurta(v.Data)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <p class="suave pequeno mt">Critérios: maior nota, depois menor tempo. Apenas a primeira tentativa de cada candidato é considerada.</p>
+}
+
+@code {
+    [Parameter] public RankingProvaDto? Ranking { get; set; }
+}

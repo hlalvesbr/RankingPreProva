@@ -1,0 +1,108 @@
+@page "/favoritos"
+@attribute [Authorize]
+@inject QuestoesApi QuestoesApi
+@inject ProvasApi ProvasApi
+@inject IToastService Toast
+
+<PageTitle>Favoritos · RankingPreProva</PageTitle>
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1>⭐ Favoritos</h1>
+        <p>Questões e provas que você salvou para revisar depois.</p>
+    </div>
+    <div class="linha">
+        <FluentButton Appearance="@(aba == "questoes" ? Appearance.Accent : Appearance.Neutral)" OnClick="@(() => Trocar("questoes"))">Questões</FluentButton>
+        <FluentButton Appearance="@(aba == "provas" ? Appearance.Accent : Appearance.Neutral)" OnClick="@(() => Trocar("provas"))">Provas</FluentButton>
+    </div>
+</div>
+
+@if (carregando)
+{
+    <Carregando />
+}
+else if (aba == "questoes")
+{
+    @if (questoes is null || questoes.Items.Count == 0)
+    {
+        <div class="estado-vazio"><div class="estado-icone">☆</div><p>Nenhuma questão favorita. Use a ⭐ nas questões para salvá-las aqui.</p></div>
+    }
+    else
+    {
+        @foreach (var q in questoes.Items)
+        {
+            <QuestaoItem Questao="q" UsuarioId="usuarioId" @key="q.Id" />
+        }
+        <Paginacao Pagina="questoes.Page" TotalPaginas="questoes.TotalPages" PaginaChanged="PaginaQuestoes" />
+    }
+}
+else
+{
+    @if (provas is null || provas.Items.Count == 0)
+    {
+        <div class="estado-vazio"><div class="estado-icone">☆</div><p>Nenhuma prova favorita.</p></div>
+    }
+    else
+    {
+        <div class="grade-2">
+            @foreach (var p in provas.Items)
+            {
+                <ProvaCartao Prova="p" @key="p.Id" />
+            }
+        </div>
+        <Paginacao Pagina="provas.Page" TotalPaginas="provas.TotalPages" PaginaChanged="PaginaProvas" />
+    }
+}
+
+@code {
+    [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
+
+    private string aba = "questoes";
+    private bool carregando = true;
+    private int usuarioId;
+    private readonly QuestaoFiltro filtroQuestoes = new() { SomenteFavoritas = true };
+    private readonly ProvaFiltro filtroProvas = new() { SomenteFavoritas = true };
+    private PagedResult<QuestaoResumoDto>? questoes;
+    private PagedResult<ProvaResumoDto>? provas;
+
+    protected override async Task OnInitializedAsync()
+    {
+        usuarioId = await AuthState.UsuarioIdAsync();
+        await Carregar();
+    }
+
+    private async Task Trocar(string novaAba)
+    {
+        aba = novaAba;
+        await Carregar();
+    }
+
+    private async Task Carregar()
+    {
+        carregando = true;
+        try
+        {
+            if (aba == "questoes")
+                questoes = await QuestoesApi.ListarAsync(filtroQuestoes);
+            else
+                provas = await ProvasApi.ListarAsync(filtroProvas);
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+        }
+        carregando = false;
+    }
+
+    private async Task PaginaQuestoes(int p)
+    {
+        filtroQuestoes.Page = p;
+        await Carregar();
+    }
+
+    private async Task PaginaProvas(int p)
+    {
+        filtroProvas.Page = p;
+        await Carregar();
+    }
+}

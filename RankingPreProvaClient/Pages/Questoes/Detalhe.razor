@@ -1,0 +1,127 @@
+@page "/questoes/{Id:int}"
+@attribute [Authorize]
+@inject QuestoesApi Api
+@inject IToastService Toast
+@inject NavigationManager Navigation
+
+<PageTitle>Questão #@Id · RankingPreProva</PageTitle>
+
+@if (erro is not null)
+{
+    <div class="estado-vazio">
+        <div class="estado-icone">🗃️</div>
+        <h2>@erro</h2>
+        <FluentButton OnClick="@(() => Navigation.NavigateTo("/questoes"))">Voltar ao banco de questões</FluentButton>
+    </div>
+}
+else if (questao is null)
+{
+    <Carregando />
+}
+else
+{
+    <div class="cabecalho-pagina">
+        <div>
+            <a href="/questoes" class="pequeno">← Banco de questões</a>
+            <h1>Questão #@questao.Id</h1>
+            <p>
+                por <a href="/perfil/@questao.AutorId">@questao.AutorNome</a> · @UiExtensions.DataCurta(questao.CriadoEm)
+                @if (!string.IsNullOrEmpty(questao.Orgao)) { <text> · Órgão: @questao.Orgao</text> }
+            </p>
+        </div>
+        <div class="linha">
+            <VotoControl Saldo="questao.SaldoVotos" MeuVoto="questao.MeuVoto" Desabilitado="questao.EhAutor" Votar="Votar" />
+            <FavoritoToggle Favorito="questao.Favorita" AoAlternar="() => Api.FavoritarAsync(Id)" />
+            <DenunciaBotao AlvoTipo="AlvoTipo.Questao" AlvoId="Id" Desabilitado="questao.EhAutor" />
+            @if (questao.EhAutor)
+            {
+                <FluentButton OnClick="@(() => Navigation.NavigateTo($"/questoes/{Id}/editar"))" Disabled="@(questao.Status == StatusItem.Arquivado)">✏️ Editar</FluentButton>
+                <FluentButton OnClick="() => confirmarExclusao = true" Disabled="@(questao.Status == StatusItem.Arquivado)">🗑️ Excluir</FluentButton>
+            }
+        </div>
+    </div>
+
+    @if (questao.SaldoVotos < 0)
+    {
+        <FluentMessageBar Intent="MessageIntent.Warning" AllowDismiss="false" Class="mb">
+            Esta questão foi avaliada negativamente pela comunidade. Confira com atenção o enunciado e o gabarito.
+        </FluentMessageBar>
+    }
+    @if (questao.Status == StatusItem.EmRevisao)
+    {
+        <FluentMessageBar Intent="MessageIntent.Error" AllowDismiss="false" Class="mb">
+            Esta questão recebeu várias denúncias e está em revisão pela moderação.
+        </FluentMessageBar>
+    }
+
+    <div class="cartao @UiExtensions.ClasseSaldo(questao.SaldoVotos, questao.Status)">
+        <QuestaoMeta Questao="questao" />
+        <QuestaoResolver Questao="questao" />
+    </div>
+
+    <div class="mt"><AdSlot Posicao="conteudo" Altura="120" /></div>
+
+    <Modal @bind-Aberto="confirmarExclusao" Titulo="Excluir questão?">
+        <ChildContent>
+            <p>Se a questão já tiver sido respondida ou fizer parte de alguma prova, ela será <strong>arquivada</strong> em vez de excluída, para preservar históricos e rankings.</p>
+        </ChildContent>
+        <Rodape>
+            <FluentButton OnClick="() => confirmarExclusao = false">Cancelar</FluentButton>
+            <FluentButton Appearance="Appearance.Accent" OnClick="Excluir">Confirmar</FluentButton>
+        </Rodape>
+    </Modal>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private QuestaoDto? questao;
+    private string? erro;
+    private bool confirmarExclusao;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        questao = null;
+        erro = null;
+        try
+        {
+            questao = await Api.ObterAsync(Id);
+        }
+        catch (ApiException ex)
+        {
+            erro = ex.Message;
+        }
+    }
+
+    private async Task<VotoResultadoDto?> Votar(int valor)
+    {
+        try
+        {
+            var r = await Api.VotarAsync(Id, valor);
+            questao!.SaldoVotos = r.SaldoVotos;
+            questao.MeuVoto = r.MeuVoto;
+            StateHasChanged();
+            return r;
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+            return null;
+        }
+    }
+
+    private async Task Excluir()
+    {
+        try
+        {
+            await Api.ExcluirAsync(Id);
+            Toast.ShowSuccess("Questão removida.");
+            Navigation.NavigateTo("/questoes/minhas");
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+        }
+        confirmarExclusao = false;
+    }
+}

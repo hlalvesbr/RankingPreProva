@@ -1,0 +1,98 @@
+@page "/historico"
+@attribute [Authorize]
+@inject UsuariosApi Api
+@inject IToastService Toast
+
+<PageTitle>Histórico · RankingPreProva</PageTitle>
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1>📈 Histórico e desempenho</h1>
+        <p>Acompanhe sua evolução e descubra quais assuntos precisam de mais atenção.</p>
+    </div>
+</div>
+
+@if (historico is null)
+{
+    <Carregando />
+}
+else
+{
+    <div class="cartao mb">
+        <h2>Atividade nos últimos 30 dias</h2>
+        <GraficoAtividade Dias="historico.Dias" Altura="160" />
+        <p class="pequeno suave">Barra clara: total de respostas · barra escura: acertos.</p>
+    </div>
+
+    <div class="cartao mb">
+        <h2>Desempenho por assunto</h2>
+        @if (historico.Assuntos.Count == 0)
+        {
+            <p class="suave">Responda questões para ver seu desempenho por assunto.</p>
+        }
+        else
+        {
+            @foreach (var a in historico.Assuntos)
+            {
+                <div class="desempenho-linha">
+                    <a href="/questoes?assunto=@Uri.EscapeDataString(a.Assunto)">#@a.Assunto</a>
+                    <div class="desempenho-barra"><span style="width:@Css(a.Percentual)%"></span></div>
+                    <span class="suave">@UiExtensions.Pct(a.Percentual) (@a.Acertos/@a.Respostas)</span>
+                </div>
+            }
+            @if (historico.Assuntos.Where(a => a.Respostas >= 5).OrderBy(a => a.Percentual).FirstOrDefault() is { } fraco)
+            {
+                <FluentMessageBar Intent="MessageIntent.Info" AllowDismiss="false" Class="mt">
+                    💡 Seu ponto de atenção é <strong>@fraco.Assunto</strong> (@UiExtensions.Pct(fraco.Percentual) de acerto).
+                    <a href="/questoes?assunto=@Uri.EscapeDataString(fraco.Assunto)">Praticar agora</a>
+                </FluentMessageBar>
+            }
+        }
+    </div>
+
+    <div class="cartao">
+        <h2>Provas realizadas</h2>
+        @if (historico.Tentativas.Count == 0)
+        {
+            <p class="suave">Você ainda não fez nenhuma prova. <a href="/provas">Explorar provas</a></p>
+        }
+        else
+        {
+            <table class="tabela">
+                <thead><tr><th>Prova</th><th class="num">Nota</th><th class="num">%</th><th class="num">A/E/B</th><th class="num">Tempo</th><th>Tipo</th><th>Data</th></tr></thead>
+                <tbody>
+                    @foreach (var t in historico.Tentativas)
+                    {
+                        <tr>
+                            <td><a href="/provas/@t.ProvaId/resultado/@t.TentativaId">@t.ProvaTitulo</a></td>
+                            <td class="num">@UiExtensions.Nota(t.Nota) / @UiExtensions.Nota(t.NotaMaxima)</td>
+                            <td class="num">@UiExtensions.Pct(t.Percentual)</td>
+                            <td class="num">@t.Acertos/@t.Erros/@t.EmBranco</td>
+                            <td class="num">@TextoUtil.Duracao(t.DuracaoSeg)</td>
+                            <td>@(t.EhPrimeira ? "🏆 Ranking" : "🔁 Treino")</td>
+                            <td>@UiExtensions.DataHora(t.Finalizada)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+}
+
+@code {
+    private HistoricoDto? historico;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            historico = await Api.HistoricoAsync();
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+        }
+    }
+
+    private static string Css(double v) => v.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+}

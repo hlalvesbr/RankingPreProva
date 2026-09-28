@@ -1,0 +1,20 @@
+@if (!string.IsNullOrEmpty(Url))
+{
+    <img class="avatar" src="@Url" alt="@Nome" width="@Tamanho" height="@Tamanho" referrerpolicy="no-referrer" />
+}
+else
+{
+    <span class="avatar avatar-iniciais" style="@Estilo">@Iniciais</span>
+}
+
+@code {
+    [Parameter] public string Nome { get; set; } = string.Empty;
+    [Parameter] public string? Url { get; set; }
+    [Parameter] public int Tamanho { get; set; } = 32;
+
+    private static readonly string[] Cores = ["#1f5f6b", "#6b4f1f", "#3d5a80", "#7a3e48", "#2f6b3a", "#5b4a8a"];
+
+    private string Iniciais => string.Concat(Nome.Split(' ', StringSplitOptions.RemoveEmptyEntries).Take(2).Select(p => char.ToUpperInvariant(p[0])));
+    private string Cor => Cores[Math.Abs(Nome.GetHashCode() % Cores.Length)];
+    private string Estilo => $"width:{Tamanho}px;height:{Tamanho}px;font-size:{Tamanho * 42 / 100}px;background:{Cor}";
+}

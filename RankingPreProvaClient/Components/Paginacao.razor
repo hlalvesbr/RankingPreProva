@@ -1,0 +1,22 @@
+@inject IJSRuntime JS
+
+@if (TotalPaginas > 1)
+{
+    <div class="paginacao">
+        <FluentButton Disabled="@(Pagina <= 1)" OnClick="() => Ir(Pagina - 1)">← Anterior</FluentButton>
+        <span class="suave">Página <strong>@Pagina</strong> de @TotalPaginas</span>
+        <FluentButton Disabled="@(Pagina >= TotalPaginas)" OnClick="() => Ir(Pagina + 1)">Próxima →</FluentButton>
+    </div>
+}
+
+@code {
+    [Parameter] public int Pagina { get; set; }
+    [Parameter] public int TotalPaginas { get; set; }
+    [Parameter] public EventCallback<int> PaginaChanged { get; set; }
+
+    private async Task Ir(int pagina)
+    {
+        await PaginaChanged.InvokeAsync(pagina);
+        await JS.InvokeVoidAsync("rppFx.topo");
+    }
+}

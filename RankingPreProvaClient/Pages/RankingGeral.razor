@@ -1,0 +1,90 @@
+@page "/ranking-geral"
+@attribute [Authorize]
+@inject UsuariosApi Api
+@inject IToastService Toast
+
+<PageTitle>Ranking geral · RankingPreProva</PageTitle>
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1>🏆 Ranking geral</h1>
+        <p>Quem mais acumulou XP estudando, criando conteúdo e competindo.</p>
+    </div>
+    <div class="linha">
+        <FluentButton Appearance="@(periodo == "semana" ? Appearance.Accent : Appearance.Neutral)" OnClick="@(() => Trocar("semana"))">Últimos 7 dias</FluentButton>
+        <FluentButton Appearance="@(periodo == "total" ? Appearance.Accent : Appearance.Neutral)" OnClick="@(() => Trocar("total"))">Todos os tempos</FluentButton>
+    </div>
+</div>
+
+@if (itens is null)
+{
+    <Carregando />
+}
+else if (itens.Count == 0)
+{
+    <div class="estado-vazio"><div class="estado-icone animar-flutuar">🏁</div><p>Ninguém pontuou neste período. Seja o primeiro!</p></div>
+}
+else
+{
+    <div class="cartao">
+        <div class="podio">
+            @foreach (var r in itens.Take(3))
+            {
+                <div class="podio-lugar podio-@r.Posicao">
+                    @if (r.Posicao == 1) { <span class="podio-coroa">👑</span> }
+                    <Avatar Nome="@r.Nome" Url="@r.AvatarUrl" Tamanho="@(r.Posicao == 1 ? 56 : 44)" />
+                    <a href="/perfil/@(r.Apelido ?? r.UsuarioId.ToString())" class="negrito">@r.Nome</a>
+                    <span class="pequeno suave">@r.Xp XP</span>
+                    <div class="podio-bloco">@r.Posicao</div>
+                </div>
+            }
+        </div>
+        <table class="tabela">
+            <thead><tr><th>#</th><th>Candidato</th><th>Nível</th><th class="num">XP</th></tr></thead>
+            <tbody>
+                @foreach (var r in itens)
+                {
+                    <tr class="@(r.EhVoce ? "voce" : "")">
+                        <td class="medalha">@UiExtensions.Medalha(r.Posicao)</td>
+                        <td>
+                            <span class="linha" style="gap:8px">
+                                <Avatar Nome="@r.Nome" Url="@r.AvatarUrl" Tamanho="26" />
+                                <a href="/perfil/@(r.Apelido ?? r.UsuarioId.ToString())">@r.Nome</a>
+                                @if (r.EhVoce) { <span class="etiqueta etiqueta-alerta">você</span> }
+                            </span>
+                        </td>
+                        <td>@r.Nivel · @Niveis.Titulo(r.Nivel)</td>
+                        <td class="num">@r.Xp</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private string periodo = "semana";
+    private List<RankingGeralItemDto>? itens;
+
+    protected override Task OnInitializedAsync() => Carregar();
+
+    private async Task Trocar(string novo)
+    {
+        periodo = novo;
+        await Carregar();
+    }
+
+    private async Task Carregar()
+    {
+        itens = null;
+        try
+        {
+            itens = await Api.RankingGeralAsync(periodo);
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+            itens = [];
+        }
+    }
+}

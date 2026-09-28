@@ -1,0 +1,51 @@
+@inject QuestoesApi Api
+@inject IToastService Toast
+
+<div class="cartao questao-item animar-entrada @UiExtensions.ClasseSaldo(Questao.SaldoVotos, Questao.Status)">
+    <div class="questao-corpo">
+        <QuestaoMeta Questao="Questao" />
+        <p class="questao-resumo">@Questao.Enunciado</p>
+        <div class="questao-rodape">
+            <VotoControl Saldo="Questao.SaldoVotos" MeuVoto="Questao.MeuVoto" Desabilitado="@(Questao.AutorId == UsuarioId)" Votar="Votar" />
+            <span>👥 @Questao.TotalRespostas respostas</span>
+            @if (Questao.TotalRespostas > 0)
+            {
+                <span title="Percentual de acerto da comunidade">
+                    <span class="estatistica-barra"><span style="width:@Questao.PercentualAcerto.ToString("0", System.Globalization.CultureInfo.InvariantCulture)%"></span></span>
+                    @UiExtensions.Pct(Questao.PercentualAcerto)
+                </span>
+            }
+            @if (Questao.JaRespondi) { <span class="etiqueta etiqueta-sucesso">✔ Respondida</span> }
+            <span>por @Questao.AutorNome</span>
+            <span style="margin-left:auto" class="linha">
+                @if (Questao.AutorId == UsuarioId)
+                {
+                    <a href="/questoes/@Questao.Id/editar">Editar</a>
+                }
+                <FluentAnchor Href="@($"/questoes/{Questao.Id}")" Appearance="Appearance.Accent">Resolver</FluentAnchor>
+            </span>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public QuestaoResumoDto Questao { get; set; } = default!;
+    [Parameter] public int UsuarioId { get; set; }
+
+    private async Task<VotoResultadoDto?> Votar(int valor)
+    {
+        try
+        {
+            var r = await Api.VotarAsync(Questao.Id, valor);
+            Questao.SaldoVotos = r.SaldoVotos;
+            Questao.MeuVoto = r.MeuVoto;
+            StateHasChanged();
+            return r;
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+            return null;
+        }
+    }
+}

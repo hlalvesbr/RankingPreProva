@@ -1,0 +1,62 @@
+@inject NavigationManager Navigation
+
+<section class="landing-hero animar-entrada">
+    <div>
+        <span class="etiqueta etiqueta-primaria">🎯 Para concurseiros de verdade</span>
+        <h1 class="mt">Estude para concursos <span>subindo no ranking</span>.</h1>
+        <p>
+            Resolva questões de bancas reais, crie simulados para a comunidade e compare suas notas
+            com outros candidatos. Ganhe XP, mantenha sua sequência de estudos e desbloqueie conquistas.
+        </p>
+        <div class="linha mt">
+            <FluentButton Appearance="Appearance.Accent" OnClick="Entrar">
+                <span class="google-g">G</span> Começar com Google
+            </FluentButton>
+            <span class="suave pequeno">Gratuito · Sem cartão de crédito</span>
+        </div>
+    </div>
+    <div class="landing-ilustracao" aria-hidden="true">
+        <span>📚</span><span>🏆</span><span>✏️</span>
+    </div>
+</section>
+
+<div class="grade-3">
+    <div class="cartao atalho">
+        <span class="atalho-icone">🗂️</span>
+        <h3>Banco global de questões</h3>
+        <p>Questões de múltipla escolha e certo/errado, com banca, ano, concurso, cargo e assuntos para busca.</p>
+    </div>
+    <div class="cartao atalho">
+        <span class="atalho-icone">📝</span>
+        <h3>Simulados da comunidade</h3>
+        <p>Monte provas com regras de pontuação como as da banca, inclusive "uma errada anula uma certa".</p>
+    </div>
+    <div class="cartao atalho">
+        <span class="atalho-icone">🏆</span>
+        <h3>Ranking justo</h3>
+        <p>Só a primeira tentativa vale para o ranking. Depois, treine à vontade sem afetar a classificação.</p>
+    </div>
+    <div class="cartao atalho">
+        <span class="atalho-icone">🔥</span>
+        <h3>Sequência de estudos</h3>
+        <p>Estude todos os dias e mantenha sua chama acesa. A constância é o segredo da aprovação.</p>
+    </div>
+    <div class="cartao atalho">
+        <span class="atalho-icone">🏅</span>
+        <h3>Conquistas e níveis</h3>
+        <p>De Calouro a Lenda dos Concursos: cada questão respondida conta.</p>
+    </div>
+    <div class="cartao atalho">
+        <span class="atalho-icone">🤝</span>
+        <h3>Curadoria coletiva</h3>
+        <p>Vote nas melhores questões e denuncie gabaritos errados. A comunidade mantém a qualidade.</p>
+    </div>
+</div>
+
+<div class="mt">
+    <AdSlot Posicao="conteudo" Altura="120" />
+</div>
+
+@code {
+    private void Entrar() => Navigation.NavigateTo("account/login?returnUrl=%2F", forceLoad: true);
+}

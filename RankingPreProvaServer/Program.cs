@@ -1,42 +1,69 @@
+using Microsoft.EntityFrameworkCore;
+using RankingPreProvaServer.Api;
+using RankingPreProvaServer.Auth;
 using RankingPreProvaServer.Components;
+using RankingPreProvaServer.Data;
+using RankingPreProvaServer.Services;
 
 namespace RankingPreProvaServer
 {
-    public class Program
-    {
-        public static void Main(string[] args)
-        {
-            var builder = WebApplication.CreateBuilder(args);
+	public class Program
+	{
+		public static void Main(string[] args)
+		{
+			var builder = WebApplication.CreateBuilder(args);
 
-            // Add services to the container.
-            builder.Services.AddRazorComponents()
-                .AddInteractiveWebAssemblyComponents();
+			// Add services to the container.
+			builder.Services.AddRazorComponents()
+				.AddInteractiveWebAssemblyComponents();
 
-            var app = builder.Build();
+			// Configure the PostgreSQL database context.
+			builder.Services.AddDbContext<ApplicationDbContext>(options =>
+				options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseWebAssemblyDebugging();
-            }
-            else
-            {
-                app.UseExceptionHandler("/Error");
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
-            }
+			builder.AddAppAuthentication();
+			builder.Services.AddCascadingAuthenticationState();
+			builder.Services.AddProblemDetails();
 
-            app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-            app.UseHttpsRedirection();
+			builder.Services.AddScoped<UsuarioService>();
+			builder.Services.AddScoped<GamificacaoService>();
+			builder.Services.AddScoped<QuestaoService>();
+			builder.Services.AddScoped<ProvaService>();
+			builder.Services.AddScoped<TentativaService>();
+			builder.Services.AddScoped<RankingService>();
+			builder.Services.AddScoped<VotoService>();
+			builder.Services.AddScoped<DenunciaService>();
 
-            app.UseAntiforgery();
+			var app = builder.Build();
 
-            app.MapStaticAssets();
-            app.MapRazorComponents<App>()
-                .AddInteractiveWebAssemblyRenderMode()
-                .AddAdditionalAssemblies(typeof(RankingPreProvaClient._Imports).Assembly);
+			// Configure the HTTP request pipeline.
+			if (app.Environment.IsDevelopment())
+			{
+				app.UseWebAssemblyDebugging();
+			}
+			else
+			{
+				app.UseExceptionHandler("/Error");
+				// The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+				app.UseHsts();
+			}
 
-            app.Run();
-        }
-    }
+			app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+			app.UseHttpsRedirection();
+
+			app.UseAuthentication();
+			app.UseAuthorization();
+			app.UseAntiforgery();
+
+			app.MapStaticAssets();
+			app.MapAccountEndpoints();
+			app.MapApiEndpoints();
+
+			app.MapRazorComponents<App>()
+				.AddInteractiveWebAssemblyRenderMode()
+				.AddAdditionalAssemblies(typeof(RankingPreProvaClient._Imports).Assembly);
+
+			app.Run();
+		}
+	}
 }

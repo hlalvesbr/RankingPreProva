@@ -1,0 +1,285 @@
+@page "/provas/{Id:int}/responder"
+@attribute [Authorize]
+@implements IAsyncDisposable
+@inject ProvasApi Api
+@inject SessaoState Sessao
+@inject IToastService Toast
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>@(tentativa?.Titulo ?? "Prova") · RankingPreProva</PageTitle>
+
+@if (erro is not null)
+{
+    <div class="estado-vazio">
+        <div class="estado-icone">⚠️</div>
+        <h2>@erro</h2>
+        <FluentButton OnClick="@(() => Navigation.NavigateTo($"/provas/{Id}"))">Voltar</FluentButton>
+    </div>
+}
+else if (tentativa is null)
+{
+    <Carregando Texto="Distribuindo o caderno de provas…" />
+}
+else
+{
+    var q = tentativa.Questoes[atual];
+    var respondidas = respostas.Count(r => r.Value is not null);
+
+    <div class="execucao-topo">
+        <div>
+            <h2 style="margin:0">@tentativa.Titulo</h2>
+            <span class="pequeno suave">
+                @(tentativa.EhPrimeira ? "🏆 Tentativa válida para o ranking" : "🔁 Modo treino (não altera o ranking)")
+            </span>
+        </div>
+        <div class="linha">
+            <span class="cronometro @(restante is < 300 ? "alerta" : "")" title="@(restante is null ? "Tempo decorrido" : "Tempo restante")">
+                ⏱️ @Relogio
+            </span>
+            <FluentButton Appearance="Appearance.Accent" OnClick="() => confirmar = true">Entregar prova</FluentButton>
+        </div>
+    </div>
+
+    <div class="barra-progresso mb"><span style="width:@Css(100.0 * respondidas / tentativa.Questoes.Count)%"></span></div>
+
+    <div class="execucao">
+        <div>
+            <div class="cartao animar-entrada" @key="q.QuestaoId">
+                <div class="linha-entre mb">
+                    <div class="linha" style="gap:6px">
+                        <span class="etiqueta etiqueta-primaria">Questão @(atual + 1) de @tentativa.Questoes.Count</span>
+                        @if (!string.IsNullOrEmpty(q.Banca)) { <span class="etiqueta">🏛️ @q.Banca</span> }
+                        @if (q.Ano is int ano) { <span class="etiqueta">📅 @ano</span> }
+                        @if (tentativa.Regra == RegraPontuacao.PesoPersonalizado) { <span class="etiqueta">Peso @UiExtensions.Nota(q.Peso)</span> }
+                    </div>
+                    <button type="button" class="botao-icone" title="Marcar para revisar" @onclick="() => AlternarMarcada(q.QuestaoId)">
+                        @(marcadas.Contains(q.QuestaoId) ? "🚩" : "🏳️")
+                    </button>
+                </div>
+                <p class="questao-enunciado">@q.Enunciado</p>
+                <div class="alternativas @(q.Tipo == TipoQuestao.CertoErrado ? "alternativas-ce" : "")">
+                    @foreach (var alt in q.Alternativas)
+                    {
+                        var marcada = respostas.GetValueOrDefault(q.QuestaoId) == alt.Letra;
+                        <button type="button" class="alternativa @(marcada ? "selecionada" : "") @(Riscada(q.QuestaoId, alt.Letra) ? "riscada" : "")"
+                                @onclick="() => Marcar(q.QuestaoId, alt.Letra)"
+                                @oncontextmenu="() => Riscar(q.QuestaoId, alt.Letra)" @oncontextmenu:preventDefault>
+                            <span class="letra">@alt.Letra</span>
+                            <span class="texto">@alt.Texto</span>
+                        </button>
+                    }
+                </div>
+                @if (tentativa.Regra == RegraPontuacao.CespeAnulacao)
+                {
+                    <p class="suave pequeno mt">⚠️ Nesta prova, cada erro desconta pontos. Se estiver em dúvida, considere deixar em branco.</p>
+                }
+            </div>
+
+            <div class="linha-entre mt">
+                <FluentButton Disabled="@(atual == 0)" OnClick="() => Ir(atual - 1)">← Anterior</FluentButton>
+                <FluentButton Disabled="@(respostas.GetValueOrDefault(q.QuestaoId) is null)" OnClick="() => Limpar(q.QuestaoId)">Deixar em branco</FluentButton>
+                @if (atual < tentativa.Questoes.Count - 1)
+                {
+                    <FluentButton Appearance="Appearance.Accent" OnClick="() => Ir(atual + 1)">Próxima →</FluentButton>
+                }
+                else
+                {
+                    <FluentButton Appearance="Appearance.Accent" OnClick="() => confirmar = true">Entregar prova</FluentButton>
+                }
+            </div>
+        </div>
+
+        <aside class="cartao folha-respostas">
+            <h3>Folha de respostas</h3>
+            <p class="pequeno suave">@respondidas de @tentativa.Questoes.Count respondidas</p>
+            <div class="folha-grade">
+                @for (var i = 0; i < tentativa.Questoes.Count; i++)
+                {
+                    var indice = i;
+                    var item = tentativa.Questoes[i];
+                    var letra = respostas.GetValueOrDefault(item.QuestaoId);
+                    <button type="button" class="folha-item @(letra is not null ? "respondida" : "") @(indice == atual ? "atual" : "") @(marcadas.Contains(item.QuestaoId) ? "marcada" : "")"
+                            @onclick="() => Ir(indice)">
+                        <strong>@(indice + 1)</strong>
+                        <span>@(letra?.ToString() ?? "–")</span>
+                    </button>
+                }
+            </div>
+            <p class="pequeno suave mt">Clique com o botão direito numa alternativa para riscá-la. 🚩 = marcada para revisar.</p>
+        </aside>
+    </div>
+
+    <Modal @bind-Aberto="confirmar" Titulo="Entregar a prova?">
+        <ChildContent>
+            <p>Você respondeu <strong>@respondidas de @tentativa.Questoes.Count</strong> questões.</p>
+            @if (respondidas < tentativa.Questoes.Count)
+            {
+                <p class="suave">As questões sem resposta serão consideradas em branco.</p>
+            }
+            @if (marcadas.Count > 0)
+            {
+                <p class="suave">🚩 @marcadas.Count questão(ões) marcada(s) para revisar.</p>
+            }
+            @if (tentativa.EhPrimeira)
+            {
+                <p><strong>Esta tentativa vale para o ranking.</strong> Depois de entregar, não será possível alterar.</p>
+            }
+        </ChildContent>
+        <Rodape>
+            <FluentButton OnClick="() => confirmar = false">Continuar respondendo</FluentButton>
+            <FluentButton Appearance="Appearance.Accent" Loading="entregando" OnClick="Entregar">Entregar</FluentButton>
+        </Rodape>
+    </Modal>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private TentativaIniciadaDto? tentativa;
+    private Dictionary<int, char?> respostas = [];
+    private readonly HashSet<int> marcadas = [];
+    private readonly HashSet<string> riscadas = [];
+    private int atual;
+    private string? erro;
+    private bool confirmar;
+    private bool entregando;
+    private int? restante;
+    private int decorrido;
+    private PeriodicTimer? timer;
+    private CancellationTokenSource? cts;
+
+    private string ChaveLocal => $"rpp-tentativa-{tentativa?.TentativaId}";
+
+    private string Relogio => TextoUtil.Duracao(restante ?? decorrido);
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            tentativa = await Api.IniciarTentativaAsync(Id);
+            respostas = tentativa.Questoes.ToDictionary(q => q.QuestaoId, _ => (char?)null);
+
+            var salvo = await JS.InvokeAsync<string?>("localStorage.getItem", ChaveLocal);
+            if (!string.IsNullOrEmpty(salvo))
+            {
+                var anteriores = System.Text.Json.JsonSerializer.Deserialize<Dictionary<int, char?>>(salvo);
+                foreach (var (k, v) in anteriores ?? [])
+                    if (respostas.ContainsKey(k)) respostas[k] = v;
+            }
+
+            AtualizarRelogio();
+            await JS.InvokeVoidAsync("rppFx.confirmarSaida", true);
+            cts = new CancellationTokenSource();
+            _ = RodarRelogio(cts.Token);
+        }
+        catch (ApiException ex)
+        {
+            erro = ex.Message;
+        }
+    }
+
+    private async Task RodarRelogio(CancellationToken token)
+    {
+        timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+        try
+        {
+            while (await timer.WaitForNextTickAsync(token))
+            {
+                AtualizarRelogio();
+                if (restante == 0 && !entregando)
+                {
+                    await InvokeAsync(async () =>
+                    {
+                        Toast.ShowWarning("⏰ Tempo esgotado! Sua prova foi entregue automaticamente.");
+                        await Entregar();
+                    });
+                    return;
+                }
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+        }
+    }
+
+    private void AtualizarRelogio()
+    {
+        if (tentativa is null) return;
+        decorrido = (int)Math.Max(0, (DateTime.UtcNow - tentativa.Iniciada.ToUniversalTime()).TotalSeconds);
+        if (tentativa.TempoLimiteMin is int limite)
+            restante = Math.Max(0, limite * 60 - decorrido);
+    }
+
+    private async Task Marcar(int questaoId, char letra)
+    {
+        respostas[questaoId] = respostas[questaoId] == letra ? null : letra;
+        riscadas.Remove($"{questaoId}-{letra}");
+        await Salvar();
+    }
+
+    private async Task Limpar(int questaoId)
+    {
+        respostas[questaoId] = null;
+        await Salvar();
+    }
+
+    private void Riscar(int questaoId, char letra)
+    {
+        var chave = $"{questaoId}-{letra}";
+        if (!riscadas.Add(chave)) riscadas.Remove(chave);
+    }
+
+    private bool Riscada(int questaoId, char letra) => riscadas.Contains($"{questaoId}-{letra}");
+
+    private void AlternarMarcada(int questaoId)
+    {
+        if (!marcadas.Add(questaoId)) marcadas.Remove(questaoId);
+    }
+
+    private async Task Ir(int indice)
+    {
+        atual = Math.Clamp(indice, 0, tentativa!.Questoes.Count - 1);
+        await JS.InvokeVoidAsync("rppFx.topo");
+    }
+
+    private Task Salvar() =>
+        JS.InvokeVoidAsync("localStorage.setItem", ChaveLocal, System.Text.Json.JsonSerializer.Serialize(respostas)).AsTask();
+
+    private async Task Entregar()
+    {
+        if (entregando || tentativa is null) return;
+        entregando = true;
+        try
+        {
+            var resultado = await Api.FinalizarTentativaAsync(tentativa.TentativaId, new FinalizarTentativaDto { Respostas = respostas });
+            cts?.Cancel();
+            await JS.InvokeVoidAsync("localStorage.removeItem", ChaveLocal);
+            await JS.InvokeVoidAsync("rppFx.confirmarSaida", false);
+            Sessao.AplicarRecompensa(resultado.Recompensa);
+            Navigation.NavigateTo($"/provas/{Id}/resultado/{resultado.TentativaId}?nova=true");
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+            entregando = false;
+        }
+        confirmar = false;
+    }
+
+    private static string Css(double v) => v.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+
+    public async ValueTask DisposeAsync()
+    {
+        cts?.Cancel();
+        timer?.Dispose();
+        try
+        {
+            await JS.InvokeVoidAsync("rppFx.confirmarSaida", false);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+}

@@ -1,0 +1,12 @@
+@page "/"
+
+<PageTitle>RankingPreProva · Gamifique sua preparação para concursos</PageTitle>
+
+<AuthorizeView>
+    <Authorized>
+        <Dashboard />
+    </Authorized>
+    <NotAuthorized>
+        <Landing />
+    </NotAuthorized>
+</AuthorizeView>

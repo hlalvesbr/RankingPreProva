@@ -1,0 +1,178 @@
+@inject UsuariosApi Api
+@inject IToastService Toast
+@inject NavigationManager Navigation
+
+@if (dados is null)
+{
+    <Carregando Texto="Arrumando sua mesa de estudos…" />
+}
+else
+{
+    var u = dados.Usuario;
+    var metaPct = Math.Min(100, u.MetaDiaria == 0 ? 0 : 100 * dados.RespostasHoje / u.MetaDiaria);
+
+    <section class="boas-vindas animar-entrada">
+        <div>
+            <h1>@Saudacao, @PrimeiroNome(u.Nome)! @(u.SequenciaDias >= 3 ? "🔥" : "👋")</h1>
+            <p>
+                @if (u.SequenciaDias > 0)
+                {
+                    <text>Você está há <strong>@u.SequenciaDias dia(s)</strong> estudando sem parar. Não quebre a sequência!</text>
+                }
+                else
+                {
+                    <text>Que tal começar uma nova sequência de estudos hoje?</text>
+                }
+            </p>
+            <p class="pequeno">
+                Nível @u.Nivel · @Niveis.Titulo(u.Nivel)
+                @if (dados.PosicaoRankingSemanal is int pos)
+                {
+                    <text> · @pos º no ranking da semana</text>
+                }
+            </p>
+        </div>
+        <div class="meta-anel" style="--p:@metaPct" title="Meta diária">
+            <div><strong>@dados.RespostasHoje</strong><span>de @u.MetaDiaria</span></div>
+        </div>
+    </section>
+
+    @if (dados.DesafioDoDiaId is int desafioId)
+    {
+        <div class="desafio mb animar-entrada">
+            <span class="desafio-icone">🎲</span>
+            <div style="flex:1">
+                <strong>Desafio do dia</strong>
+                <div class="suave pequeno">
+                    @(dados.DesafioRespondido ? "Você já encarou o desafio de hoje. Volte amanhã!" : "Acerte a questão sorteada de hoje e ganhe +10 XP bônus.")
+                </div>
+            </div>
+            <FluentButton Appearance="@(dados.DesafioRespondido ? Appearance.Neutral : Appearance.Accent)"
+                          OnClick="@(() => Navigation.NavigateTo($"/questoes/{desafioId}"))">
+                @(dados.DesafioRespondido ? "Rever" : "Aceitar desafio")
+            </FluentButton>
+        </div>
+    }
+
+    <h2>O que vamos fazer hoje?</h2>
+    <div class="grade-3 mb">
+        <a class="cartao cartao-clicavel atalho" href="/praticar">
+            <span class="atalho-icone">⚡</span>
+            <h3>Responder questões</h3>
+            <p>Modo prática com filtros por assunto, banca e ano.</p>
+        </a>
+        <a class="cartao cartao-clicavel atalho" href="/provas">
+            <span class="atalho-icone">📝</span>
+            <h3>Fazer uma prova</h3>
+            <p>Simulados criados pela comunidade, com ranking.</p>
+        </a>
+        <a class="cartao cartao-clicavel atalho" href="/questoes">
+            <span class="atalho-icone">🗂️</span>
+            <h3>Ver questões</h3>
+            <p>Explore o banco global de questões.</p>
+        </a>
+        <a class="cartao cartao-clicavel atalho" href="/questoes/nova">
+            <span class="atalho-icone">✍️</span>
+            <h3>Criar questão</h3>
+            <p>Contribua com o banco e ganhe +10 XP.</p>
+        </a>
+        <a class="cartao cartao-clicavel atalho" href="/provas/nova">
+            <span class="atalho-icone">🏗️</span>
+            <h3>Criar prova</h3>
+            <p>Monte um simulado para desafiar outros candidatos.</p>
+        </a>
+        <a class="cartao cartao-clicavel atalho" href="/ranking-geral">
+            <span class="atalho-icone">🏆</span>
+            <h3>Ranking geral</h3>
+            <p>Veja quem mais estudou nesta semana.</p>
+        </a>
+    </div>
+
+    <div class="grade-2">
+        <div class="cartao">
+            <div class="linha-entre"><h3>Sua semana</h3><span class="suave pequeno">@dados.RespostasSemana respostas · @Taxa(dados.AcertosSemana, dados.RespostasSemana) de acerto</span></div>
+            <GraficoAtividade Dias="dados.Semana" />
+        </div>
+
+        <div class="cartao">
+            <div class="linha-entre"><h3>Conquistas recentes</h3><a href="/badges" class="pequeno">Ver todas</a></div>
+            @if (dados.BadgesRecentes.Count == 0)
+            {
+                <p class="suave">Nenhuma ainda. Responda sua primeira questão para desbloquear <strong>Primeiro Passo</strong> 👣</p>
+            }
+            else
+            {
+                <div class="linha">
+                    @foreach (var b in dados.BadgesRecentes)
+                    {
+                        <div class="badge-mini" title="@b.Descricao"><span>@b.Icone</span><span>@b.Nome</span></div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="linha-entre mt"><h2 style="margin:0">Provas em alta</h2><a href="/provas">Explorar todas →</a></div>
+    @if (dados.ProvasEmAlta.Count == 0)
+    {
+        <div class="cartao mt suave">Ainda não há provas publicadas. <a href="/provas/nova">Crie a primeira!</a></div>
+    }
+    else
+    {
+        <div class="grade-2 mt">
+            @foreach (var p in dados.ProvasEmAlta)
+            {
+                <ProvaCartao Prova="p" />
+            }
+        </div>
+    }
+
+    @if (dados.UltimasTentativas.Count > 0)
+    {
+        <div class="cartao mt">
+            <div class="linha-entre"><h3>Suas últimas provas</h3><a href="/historico" class="pequeno">Histórico completo</a></div>
+            <table class="tabela">
+                <thead><tr><th>Prova</th><th class="num">Nota</th><th class="num">Acertos</th><th>Tipo</th><th>Data</th></tr></thead>
+                <tbody>
+                    @foreach (var t in dados.UltimasTentativas)
+                    {
+                        <tr>
+                            <td><a href="/provas/@t.ProvaId/resultado/@t.TentativaId">@t.ProvaTitulo</a></td>
+                            <td class="num">@UiExtensions.Nota(t.Nota) / @UiExtensions.Nota(t.NotaMaxima)</td>
+                            <td class="num">@t.Acertos</td>
+                            <td>@(t.EhPrimeira ? "Ranking" : "Treino")</td>
+                            <td>@UiExtensions.DataCurta(t.Finalizada)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+}
+
+@code {
+    private DashboardDto? dados;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            dados = await Api.DashboardAsync();
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+        }
+    }
+
+    private static string Saudacao => DateTime.Now.Hour switch
+    {
+        < 12 => "Bom dia",
+        < 18 => "Boa tarde",
+        _ => "Boa noite"
+    };
+
+    private static string PrimeiroNome(string nome) => nome.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? nome;
+
+    private static string Taxa(int acertos, int total) => total == 0 ? "0%" : UiExtensions.Pct(100.0 * acertos / total);
+}

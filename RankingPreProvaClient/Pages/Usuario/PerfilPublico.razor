@@ -1,0 +1,87 @@
+@page "/perfil/{Chave}"
+@attribute [Authorize]
+@inject UsuariosApi Api
+
+<PageTitle>@(perfil?.Nome ?? "Perfil") · RankingPreProva</PageTitle>
+
+@if (erro is not null)
+{
+    <div class="estado-vazio"><div class="estado-icone">🕵️</div><h2>@erro</h2></div>
+}
+else if (perfil is null)
+{
+    <Carregando />
+}
+else
+{
+    <div class="cartao mb">
+        <div class="perfil-topo">
+            <Avatar Nome="@perfil.Nome" Url="@perfil.AvatarUrl" Tamanho="96" />
+            <div style="flex:1">
+                <h1>@perfil.Nome</h1>
+                @if (!string.IsNullOrEmpty(perfil.Apelido)) { <div class="suave">@@@perfil.Apelido</div> }
+                <div class="linha mt" style="gap:6px">
+                    <span class="etiqueta etiqueta-primaria">Nível @perfil.Nivel · @Niveis.Titulo(perfil.Nivel)</span>
+                    @if (!string.IsNullOrEmpty(perfil.CargoAlvo)) { <span class="etiqueta">💼 @perfil.CargoAlvo</span> }
+                    @if (!string.IsNullOrEmpty(perfil.ConcursoAlvo)) { <span class="etiqueta">🎯 @perfil.ConcursoAlvo</span> }
+                </div>
+                @if (!string.IsNullOrEmpty(perfil.Bio)) { <p class="mt">@perfil.Bio</p> }
+            </div>
+        </div>
+        <div class="grade-4 mt">
+            <div class="estatistica"><strong>@perfil.Xp</strong><span>XP</span></div>
+            <div class="estatistica"><strong>@perfil.TotalRespostas</strong><span>respostas</span></div>
+            <div class="estatistica"><strong>@perfil.TotalQuestoesCriadas</strong><span>questões criadas</span></div>
+            <div class="estatistica"><strong>@perfil.MaiorSequencia</strong><span>maior sequência</span></div>
+        </div>
+    </div>
+
+    <div class="cartao mb">
+        <h2>🏅 Conquistas (@perfil.Badges.Count)</h2>
+        @if (perfil.Badges.Count == 0)
+        {
+            <p class="suave">Nenhuma conquista ainda.</p>
+        }
+        else
+        {
+            <div class="linha">
+                @foreach (var b in perfil.Badges)
+                {
+                    <div class="badge-mini" title="@b.Descricao"><span>@b.Icone</span><span>@b.Nome</span></div>
+                }
+            </div>
+        }
+    </div>
+
+    @if (perfil.Provas.Count > 0)
+    {
+        <h2>Provas criadas</h2>
+        <div class="grade-2">
+            @foreach (var p in perfil.Provas)
+            {
+                <ProvaCartao Prova="p" />
+            }
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public string Chave { get; set; } = string.Empty;
+
+    private PerfilPublicoDto? perfil;
+    private string? erro;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        perfil = null;
+        erro = null;
+        try
+        {
+            perfil = await Api.PerfilPublicoAsync(Chave);
+        }
+        catch (ApiException ex)
+        {
+            erro = ex.Message;
+        }
+    }
+}

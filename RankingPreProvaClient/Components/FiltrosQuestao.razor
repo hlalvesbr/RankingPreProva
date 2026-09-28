@@ -1,0 +1,132 @@
+@inject QuestoesApi Api
+
+<div class="cartao mb">
+    <div class="filtros">
+        <div class="campo" style="grid-column: span 2">
+            <label>Busca</label>
+            <FluentTextField @bind-Value="Filtro.Busca" Placeholder="Palavras do enunciado, concurso, cargo…" Style="width:100%" />
+        </div>
+        <div class="campo">
+            <label>Assunto</label>
+            <select class="select-nativo" @bind="Filtro.Assunto">
+                <option value="">Todos</option>
+                @foreach (var a in opcoes.Assuntos)
+                {
+                    <option value="@a.Slug">@a.Nome (@a.TotalQuestoes)</option>
+                }
+            </select>
+        </div>
+        <div class="campo">
+            <label>Banca</label>
+            <select class="select-nativo" @bind="Filtro.Banca">
+                <option value="">Todas</option>
+                @foreach (var b in opcoes.Bancas)
+                {
+                    <option value="@b">@b</option>
+                }
+            </select>
+        </div>
+        <div class="campo">
+            <label>Ano</label>
+            <select class="select-nativo" @bind="Filtro.Ano">
+                <option value="">Todos</option>
+                @foreach (var a in opcoes.Anos)
+                {
+                    <option value="@a">@a</option>
+                }
+            </select>
+        </div>
+        <div class="campo">
+            <label>Tipo</label>
+            <select class="select-nativo" @bind="Filtro.Tipo">
+                <option value="">Todos</option>
+                @foreach (var t in Enum.GetValues<TipoQuestao>())
+                {
+                    <option value="@t">@t.Nome()</option>
+                }
+            </select>
+        </div>
+        <div class="campo">
+            <label>Origem</label>
+            <select class="select-nativo" @bind="Filtro.Origem">
+                <option value="">Todas</option>
+                @foreach (var o in Enum.GetValues<OrigemQuestao>())
+                {
+                    <option value="@o">@o.Nome()</option>
+                }
+            </select>
+        </div>
+        <div class="campo">
+            <label>Dificuldade</label>
+            <select class="select-nativo" @bind="Filtro.Dificuldade">
+                <option value="">Todas</option>
+                @foreach (var d in Enum.GetValues<Dificuldade>())
+                {
+                    <option value="@d">@d.Nome()</option>
+                }
+            </select>
+        </div>
+        <div class="campo">
+            <label>Concurso</label>
+            <FluentTextField @bind-Value="Filtro.Concurso" Placeholder="Ex.: TRF 1ª Região" />
+        </div>
+        <div class="campo">
+            <label>Cargo</label>
+            <FluentTextField @bind-Value="Filtro.Cargo" Placeholder="Ex.: Analista Judiciário" />
+        </div>
+        @if (MostrarOrdem)
+        {
+            <div class="campo">
+                <label>Ordenar por</label>
+                <select class="select-nativo" @bind="Filtro.Ordem">
+                    <option value="recentes">Mais recentes</option>
+                    <option value="votadas">Mais votadas</option>
+                    <option value="populares">Mais respondidas</option>
+                    <option value="antigas">Mais antigas</option>
+                    <option value="aleatoria">Aleatória</option>
+                </select>
+            </div>
+        }
+        <div class="campo" style="justify-content:flex-end">
+            <FluentCheckbox @bind-Value="Filtro.NaoRespondidas" Label="Só não respondidas" />
+        </div>
+    </div>
+    <div class="linha mt" style="justify-content:flex-end">
+        <FluentButton OnClick="Limpar">Limpar</FluentButton>
+        <FluentButton Appearance="Appearance.Accent" OnClick="Aplicar">@TextoBotao</FluentButton>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public QuestaoFiltro Filtro { get; set; } = new();
+    [Parameter] public EventCallback AoAplicar { get; set; }
+    [Parameter] public bool MostrarOrdem { get; set; } = true;
+    [Parameter] public string TextoBotao { get; set; } = "Filtrar";
+
+    private FiltrosDisponiveisDto opcoes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try { opcoes = await Api.FiltrosAsync(); }
+        catch { opcoes = new(); }
+    }
+
+    private Task Aplicar()
+    {
+        Filtro.Page = 1;
+        return AoAplicar.InvokeAsync();
+    }
+
+    private Task Limpar()
+    {
+        var ordem = Filtro.Ordem;
+        Filtro.Busca = Filtro.Assunto = Filtro.Banca = Filtro.Concurso = Filtro.Cargo = null;
+        Filtro.Ano = null;
+        Filtro.Tipo = null;
+        Filtro.Origem = null;
+        Filtro.Dificuldade = null;
+        Filtro.NaoRespondidas = false;
+        Filtro.Ordem = ordem;
+        return Aplicar();
+    }
+}

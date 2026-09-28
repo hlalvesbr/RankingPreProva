@@ -1,0 +1,58 @@
+@inject ModeracaoApi Api
+@inject IToastService Toast
+
+<button type="button" class="botao-icone" title="Denunciar problema" disabled="@Desabilitado" @onclick="() => aberto = true">🚩</button>
+
+<Modal @bind-Aberto="aberto" Titulo="Denunciar problema">
+    <ChildContent>
+        <p class="suave">Ajude a manter a qualidade do conteúdo. Denúncias são analisadas pela moderação.</p>
+        <div class="coluna">
+            <div class="campo">
+                <label for="motivo">Motivo</label>
+                <select id="motivo" class="select-nativo" @bind="dto.Motivo">
+                    @foreach (var m in Enum.GetValues<MotivoDenuncia>())
+                    {
+                        <option value="@m">@m.Nome()</option>
+                    }
+                </select>
+            </div>
+            <div class="campo">
+                <label>Detalhes (opcional)</label>
+                <FluentTextArea @bind-Value="dto.Detalhe" Rows="4" Maxlength="1000" Placeholder="Ex.: o gabarito correto é a letra C, conforme o art. 5º…" Style="width:100%" />
+            </div>
+        </div>
+    </ChildContent>
+    <Rodape>
+        <FluentButton OnClick="() => aberto = false">Cancelar</FluentButton>
+        <FluentButton Appearance="Appearance.Accent" Loading="enviando" OnClick="Enviar">Enviar denúncia</FluentButton>
+    </Rodape>
+</Modal>
+
+@code {
+    [Parameter, EditorRequired] public AlvoTipo AlvoTipo { get; set; }
+    [Parameter, EditorRequired] public int AlvoId { get; set; }
+    [Parameter] public bool Desabilitado { get; set; }
+
+    private bool aberto;
+    private bool enviando;
+    private DenunciaCriarDto dto = new();
+
+    private async Task Enviar()
+    {
+        enviando = true;
+        try
+        {
+            dto.AlvoTipo = AlvoTipo;
+            dto.AlvoId = AlvoId;
+            await Api.DenunciarAsync(dto);
+            Toast.ShowSuccess("Denúncia enviada. Obrigado por ajudar a comunidade! 🙏");
+            aberto = false;
+            dto = new();
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+        }
+        enviando = false;
+    }
+}

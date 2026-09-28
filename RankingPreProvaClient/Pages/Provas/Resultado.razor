@@ -1,0 +1,142 @@
+@page "/provas/{Id:int}/resultado/{TentativaId:int}"
+@attribute [Authorize]
+@inject ProvasApi Api
+@inject IToastService Toast
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>Resultado · RankingPreProva</PageTitle>
+
+@if (erro is not null)
+{
+    <div class="estado-vazio">
+        <div class="estado-icone">⚠️</div>
+        <h2>@erro</h2>
+    </div>
+}
+else if (resultado is null)
+{
+    <Carregando Texto="Corrigindo sua prova…" />
+}
+else
+{
+    var pct = resultado.Percentual;
+
+    <div class="boas-vindas animar-entrada">
+        <div>
+            <a href="/provas/@Id" class="pequeno" style="color:#fff">← @resultado.ProvaTitulo</a>
+            <h1>@Mensagem(pct)</h1>
+            <p>
+                Nota <strong>@UiExtensions.Nota(resultado.Nota)</strong> de @UiExtensions.Nota(resultado.NotaMaxima)
+                · @resultado.Acertos acertos · @resultado.Erros erros · @resultado.EmBranco em branco
+                · ⏱️ @TextoUtil.Duracao(resultado.DuracaoSeg)
+            </p>
+            <p>
+                @if (resultado.EhPrimeira && resultado.PosicaoRanking is int pos)
+                {
+                    <text>🏆 Você ficou em <strong>@(pos)º lugar</strong> de @resultado.TotalParticipantes participante(s).</text>
+                }
+                else
+                {
+                    <text>🔁 Tentativa de treino: não altera o ranking.</text>
+                }
+            </p>
+        </div>
+        <div class="meta-anel" style="--p:@((int)pct)">
+            <div><strong>@((int)pct)%</strong><span>aproveit.</span></div>
+        </div>
+    </div>
+
+    <div class="linha mb">
+        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => Navigation.NavigateTo($"/provas/{Id}"))">Ver ranking</FluentButton>
+        <FluentButton OnClick="@(() => Navigation.NavigateTo($"/provas/{Id}/responder"))">🔁 Treinar novamente</FluentButton>
+        <FluentButton OnClick="@(() => somenteErros = !somenteErros)">@(somenteErros ? "Mostrar todas" : "Mostrar só erros e brancos")</FluentButton>
+    </div>
+
+    <AdSlot Posicao="conteudo" Altura="100" />
+
+    <h2 class="mt">Correção</h2>
+    @foreach (var item in resultado.Itens.Where(i => !somenteErros || !i.Correta))
+    {
+        <div class="cartao">
+            <div class="linha-entre mb">
+                <span class="etiqueta etiqueta-primaria">Questão @item.Ordem</span>
+                @if (item.Marcada is null)
+                {
+                    <span class="etiqueta">⚪ Em branco</span>
+                }
+                else if (item.Correta)
+                {
+                    <span class="etiqueta etiqueta-sucesso">✅ Acertou</span>
+                }
+                else
+                {
+                    <span class="etiqueta etiqueta-erro">❌ Errou</span>
+                }
+            </div>
+            <p class="questao-enunciado">@item.Enunciado</p>
+            <div class="alternativas @(item.Tipo == TipoQuestao.CertoErrado ? "alternativas-ce" : "")">
+                @foreach (var alt in item.Alternativas)
+                {
+                    var classe = alt.Letra == item.Gabarito ? "correta" : alt.Letra == item.Marcada ? "errada" : "";
+                    <div class="alternativa @classe">
+                        <span class="letra">@alt.Letra</span>
+                        <span class="texto">@alt.Texto</span>
+                    </div>
+                }
+            </div>
+            @if (!string.IsNullOrWhiteSpace(item.Explicacao))
+            {
+                <details class="mt" open="@(!item.Correta)">
+                    <summary class="negrito">📖 Explicação</summary>
+                    <p class="explicacao">@item.Explicacao</p>
+                </details>
+            }
+            <div class="linha mt pequeno">
+                <a href="/questoes/@item.QuestaoId">Abrir questão, votar ou denunciar →</a>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+    [Parameter] public int TentativaId { get; set; }
+    [SupplyParameterFromQuery] public bool Nova { get; set; }
+
+    private TentativaResultadoDto? resultado;
+    private string? erro;
+    private bool somenteErros;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        try
+        {
+            resultado = await Api.ObterResultadoAsync(TentativaId);
+        }
+        catch (ApiException ex)
+        {
+            erro = ex.Message;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Nova && resultado is not null)
+        {
+            Nova = false;
+            if (resultado.Percentual >= 70 || resultado.PosicaoRanking is <= 3)
+                await JS.InvokeVoidAsync("rppFx.confete");
+        }
+    }
+
+    private static string Mensagem(double pct) => pct switch
+    {
+        >= 100 => "🎯 Gabaritou! Impecável!",
+        >= 85 => "🏆 Desempenho de aprovado!",
+        >= 70 => "🚀 Mandou muito bem!",
+        >= 50 => "💪 Bom caminho, continue firme!",
+        >= 30 => "📚 Hora de revisar os pontos fracos.",
+        _ => "🌱 Todo aprovado já começou daqui."
+    };
+}

@@ -1,0 +1,77 @@
+@inject QuestoesApi Api
+
+<div class="assuntos-editor">
+    @foreach (var a in Assuntos)
+    {
+        <span class="assunto-chip">#@a <button type="button" aria-label="Remover @a" @onclick="() => Remover(a)">×</button></span>
+    }
+    <input placeholder="@(Assuntos.Count == 0 ? "Digite um assunto e tecle Enter (ex.: Direito Constitucional)" : "Adicionar assunto…")"
+           value="@termo" @oninput="Digitar" @onkeydown="Tecla" maxlength="100" />
+</div>
+@if (sugestoes.Count > 0)
+{
+    <div class="sugestoes">
+        @foreach (var s in sugestoes.Where(s => !Assuntos.Contains(s.Nome, StringComparer.OrdinalIgnoreCase)))
+        {
+            <button type="button" @onclick="() => Adicionar(s.Nome)">#@s.Nome <small>(@s.TotalQuestoes)</small></button>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public List<string> Assuntos { get; set; } = [];
+    [Parameter] public EventCallback<List<string>> AssuntosChanged { get; set; }
+
+    private string termo = string.Empty;
+    private List<AssuntoDto> sugestoes = [];
+    private CancellationTokenSource? cts;
+
+    protected override async Task OnInitializedAsync() => await Buscar(string.Empty);
+
+    private async Task Digitar(ChangeEventArgs e)
+    {
+        termo = e.Value?.ToString() ?? string.Empty;
+        if (termo.EndsWith(','))
+        {
+            await Adicionar(termo.TrimEnd(','));
+            return;
+        }
+        cts?.Cancel();
+        cts = new CancellationTokenSource();
+        var token = cts.Token;
+        await Task.Delay(250);
+        if (!token.IsCancellationRequested)
+            await Buscar(termo);
+    }
+
+    private async Task Buscar(string t)
+    {
+        try { sugestoes = await Api.SugerirAssuntosAsync(t); }
+        catch { sugestoes = []; }
+    }
+
+    private async Task Tecla(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+            await Adicionar(termo);
+        else if (e.Key == "Backspace" && termo.Length == 0 && Assuntos.Count > 0)
+            await Remover(Assuntos[^1]);
+    }
+
+    private async Task Adicionar(string nome)
+    {
+        nome = nome.Trim();
+        if (nome.Length > 0 && Assuntos.Count < 10 && !Assuntos.Contains(nome, StringComparer.OrdinalIgnoreCase))
+        {
+            Assuntos.Add(nome);
+            await AssuntosChanged.InvokeAsync(Assuntos);
+        }
+        termo = string.Empty;
+    }
+
+    private async Task Remover(string nome)
+    {
+        Assuntos.Remove(nome);
+        await AssuntosChanged.InvokeAsync(Assuntos);
+    }
+}

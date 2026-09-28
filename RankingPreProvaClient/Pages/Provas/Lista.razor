@@ -1,0 +1,105 @@
+@page "/provas"
+@page "/provas/minhas"
+@attribute [Authorize]
+@inject ProvasApi Api
+@inject IToastService Toast
+@inject NavigationManager Navigation
+
+<PageTitle>@Titulo · RankingPreProva</PageTitle>
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1>@Titulo</h1>
+        <p>@(Minhas ? "Provas que você montou. Acompanhe o ranking de cada uma." : "Simulados criados pela comunidade. Só a primeira tentativa vale para o ranking!")</p>
+    </div>
+    <FluentButton Appearance="Appearance.Accent" OnClick="@(() => Navigation.NavigateTo("/provas/nova"))">+ Nova prova</FluentButton>
+</div>
+
+<div class="cartao mb">
+    <div class="filtros">
+        <div class="campo" style="grid-column: span 2">
+            <label>Busca</label>
+            <FluentTextField @bind-Value="filtro.Busca" Placeholder="Título, concurso, cargo ou órgão" Style="width:100%" />
+        </div>
+        <div class="campo">
+            <label>Banca</label>
+            <FluentTextField @bind-Value="filtro.Banca" Placeholder="Ex.: Cebraspe" />
+        </div>
+        <div class="campo">
+            <label>Ordenar por</label>
+            <select class="select-nativo" @bind="filtro.Ordem">
+                <option value="recentes">Mais recentes</option>
+                <option value="populares">Mais participantes</option>
+                <option value="votadas">Mais votadas</option>
+            </select>
+        </div>
+    </div>
+    <div class="linha mt" style="justify-content:flex-end">
+        <FluentButton Appearance="Appearance.Accent" OnClick="Filtrar">Filtrar</FluentButton>
+    </div>
+</div>
+
+@if (resultado is null)
+{
+    <Carregando />
+}
+else if (resultado.Items.Count == 0)
+{
+    <div class="estado-vazio">
+        <div class="estado-icone animar-flutuar">📝</div>
+        <h2>Nenhuma prova encontrada</h2>
+        <p>@(Minhas ? "Você ainda não criou provas." : "Seja o primeiro a montar um simulado!")</p>
+        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => Navigation.NavigateTo("/provas/nova"))">Criar prova</FluentButton>
+    </div>
+}
+else
+{
+    <div class="grade-2">
+        @foreach (var p in resultado.Items)
+        {
+            <ProvaCartao Prova="p" @key="p.Id" />
+        }
+    </div>
+    <Paginacao Pagina="resultado.Page" TotalPaginas="resultado.TotalPages" PaginaChanged="IrPara" />
+}
+
+@code {
+    private readonly ProvaFiltro filtro = new();
+    private PagedResult<ProvaResumoDto>? resultado;
+
+    private bool Minhas => Navigation.Uri.Contains("/provas/minhas", StringComparison.OrdinalIgnoreCase);
+    private string Titulo => Minhas ? "Minhas provas" : "Explorar provas";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        filtro.SomenteMinhas = Minhas;
+        filtro.Page = 1;
+        await Carregar();
+    }
+
+    private async Task Filtrar()
+    {
+        filtro.Page = 1;
+        await Carregar();
+    }
+
+    private async Task Carregar()
+    {
+        resultado = null;
+        try
+        {
+            resultado = await Api.ListarAsync(filtro);
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+            resultado = new();
+        }
+    }
+
+    private async Task IrPara(int pagina)
+    {
+        filtro.Page = pagina;
+        await Carregar();
+    }
+}

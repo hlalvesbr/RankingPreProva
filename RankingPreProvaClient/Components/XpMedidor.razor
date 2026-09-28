@@ -1,0 +1,14 @@
+<a class="xp-medidor" href="/badges" title="@($"{Xp} XP · faltam {Proximo - Xp} XP para o nível {Nivel + 1}")">
+    <span class="xp-nivel">Nv @Nivel</span>
+    <span class="xp-barra"><span class="xp-preenchido" style="width:@Percentual.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture)%"></span></span>
+    <span class="xp-valor">@Xp XP</span>
+</a>
+
+@code {
+    [Parameter] public int Xp { get; set; }
+    [Parameter] public int Nivel { get; set; }
+
+    private int Atual => Niveis.XpParaNivel(Nivel);
+    private int Proximo => Niveis.XpParaNivel(Nivel + 1);
+    private double Percentual => Proximo == Atual ? 100 : Math.Clamp(100.0 * (Xp - Atual) / (Proximo - Atual), 0, 100);
+}

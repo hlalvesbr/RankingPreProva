@@ -1,0 +1,95 @@
+@page "/questoes"
+@page "/questoes/minhas"
+@attribute [Authorize]
+@inject QuestoesApi Api
+@inject IToastService Toast
+@inject NavigationManager Navigation
+
+<PageTitle>@Titulo · RankingPreProva</PageTitle>
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1>@Titulo</h1>
+        <p>@(Minhas ? "Questões que você cadastrou. Só você pode editá-las." : "Banco global de questões da comunidade.")</p>
+    </div>
+    <div class="linha">
+        <FluentButton OnClick="@(() => Navigation.NavigateTo("/praticar"))">⚡ Modo prática</FluentButton>
+        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => Navigation.NavigateTo("/questoes/nova"))">+ Nova questão</FluentButton>
+    </div>
+</div>
+
+<FiltrosQuestao Filtro="filtro" AoAplicar="Carregar" />
+
+@if (resultado is null)
+{
+    <Carregando />
+}
+else if (resultado.Items.Count == 0)
+{
+    <div class="estado-vazio">
+        <div class="estado-icone animar-flutuar">🔍</div>
+        <h2>Nenhuma questão encontrada</h2>
+        <p>@(Minhas ? "Você ainda não cadastrou questões." : "Tente ajustar os filtros ou cadastre uma nova questão.")</p>
+        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => Navigation.NavigateTo("/questoes/nova"))">Criar questão</FluentButton>
+    </div>
+}
+else
+{
+    <p class="suave pequeno">@resultado.Total questão(ões) encontrada(s)</p>
+    @for (var i = 0; i < resultado.Items.Count; i++)
+    {
+        var q = resultado.Items[i];
+        <QuestaoItem Questao="q" UsuarioId="usuarioId" @key="q.Id" />
+        @if (i == 4)
+        {
+            <div class="mt mb"><AdSlot Posicao="conteudo" Altura="100" /></div>
+        }
+    }
+    <Paginacao Pagina="resultado.Page" TotalPaginas="resultado.TotalPages" PaginaChanged="IrPara" />
+}
+
+@code {
+    [SupplyParameterFromQuery] public string? Busca { get; set; }
+    [SupplyParameterFromQuery] public string? Assunto { get; set; }
+    [SupplyParameterFromQuery] public string? Banca { get; set; }
+    [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
+
+    private readonly QuestaoFiltro filtro = new();
+    private PagedResult<QuestaoResumoDto>? resultado;
+    private int usuarioId;
+
+    private bool Minhas => Navigation.Uri.Contains("/questoes/minhas", StringComparison.OrdinalIgnoreCase);
+    private string Titulo => Minhas ? "Minhas questões" : "Questões";
+
+    protected override async Task OnInitializedAsync() => usuarioId = await AuthState.UsuarioIdAsync();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        filtro.Busca = Busca;
+        filtro.Assunto = Assunto is null ? null : TextoUtil.Slug(Assunto);
+        filtro.Banca = Banca;
+        filtro.SomenteMinhas = Minhas;
+        filtro.Page = 1;
+        await Carregar();
+    }
+
+    private async Task Carregar()
+    {
+        resultado = null;
+        try
+        {
+            resultado = await Api.ListarAsync(filtro);
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+            resultado = new();
+        }
+    }
+
+    private async Task IrPara(int pagina)
+    {
+        filtro.Page = pagina;
+        await Carregar();
+    }
+}

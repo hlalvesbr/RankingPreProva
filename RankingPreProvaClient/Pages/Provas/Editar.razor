@@ -1,0 +1,308 @@
+@page "/provas/nova"
+@page "/provas/{Id:int}/editar"
+@attribute [Authorize]
+@inject ProvasApi Api
+@inject QuestoesApi QuestoesApi
+@inject SessaoState Sessao
+@inject IToastService Toast
+@inject NavigationManager Navigation
+
+<PageTitle>@(Id is null ? "Nova prova" : "Editar prova") · RankingPreProva</PageTitle>
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1>@(Id is null ? "🏗️ Montar nova prova" : "✏️ Editar prova")</h1>
+        <p>Escolha as questões, defina a regra de pontuação e desafie a comunidade.</p>
+    </div>
+</div>
+
+@if (modelo is null)
+{
+    <Carregando />
+}
+else
+{
+    @if (congelada)
+    {
+        <FluentMessageBar Intent="MessageIntent.Info" AllowDismiss="false" Class="mb">
+            Esta prova já possui tentativas. Para manter o ranking justo, as questões, o tempo e a regra de pontuação não podem mais ser alterados.
+        </FluentMessageBar>
+    }
+
+    <EditForm Model="modelo" OnValidSubmit="Salvar">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="cartao">
+            <h2>Informações da prova</h2>
+            <div class="grade-3">
+                <div class="campo" style="grid-column: span 3">
+                    <label>Título *</label>
+                    <FluentTextField @bind-Value="modelo.Titulo" Maxlength="200" Placeholder="Ex.: Simulado TRF1 · Analista Judiciário · Direito Administrativo" Style="width:100%" />
+                </div>
+                <div class="campo">
+                    <label>Concurso simulado</label>
+                    <FluentTextField @bind-Value="modelo.ConcursoSimulado" Maxlength="200" Placeholder="Ex.: TRF 1ª Região 2025" />
+                </div>
+                <div class="campo">
+                    <label>Banca</label>
+                    <FluentTextField @bind-Value="modelo.Banca" Maxlength="120" Placeholder="Ex.: FGV" />
+                </div>
+                <div class="campo">
+                    <label>Cargo pretendido</label>
+                    <FluentTextField @bind-Value="modelo.Cargo" Maxlength="200" Placeholder="Ex.: Analista Judiciário" />
+                </div>
+                <div class="campo">
+                    <label>Órgão</label>
+                    <FluentTextField @bind-Value="modelo.Orgao" Maxlength="200" />
+                </div>
+                <div class="campo">
+                    <label>Ano do concurso</label>
+                    <FluentNumberField @bind-Value="modelo.Ano" Min="1950" Max="2100" />
+                </div>
+                <div class="campo" style="justify-content:flex-end">
+                    <FluentCheckbox @bind-Value="modelo.Publica" Label="Listar publicamente em Explorar provas" />
+                </div>
+                <div class="campo" style="grid-column: span 3">
+                    <label>Descrição</label>
+                    <FluentTextArea @bind-Value="modelo.Descricao" Rows="3" Maxlength="4000" Placeholder="Instruções, conteúdo abordado, dicas…" Style="width:100%" />
+                </div>
+            </div>
+        </div>
+
+        <div class="cartao">
+            <h2>Regras</h2>
+            <div class="grade-3">
+                <div class="campo">
+                    <label>Regra de pontuação</label>
+                    <select class="select-nativo" @bind="modelo.Regra" disabled="@congelada">
+                        @foreach (var r in Enum.GetValues<RegraPontuacao>())
+                        {
+                            <option value="@r">@r.Nome()</option>
+                        }
+                    </select>
+                </div>
+                @if (modelo.Regra != RegraPontuacao.PesoPersonalizado)
+                {
+                    <div class="campo">
+                        <label>Pontos por acerto</label>
+                        <FluentNumberField @bind-Value="modelo.PontosAcerto" Min="0.01" Max="100" Step="0.5" Disabled="congelada" />
+                    </div>
+                }
+                @if (modelo.Regra == RegraPontuacao.CespeAnulacao)
+                {
+                    <div class="campo">
+                        <label>Desconto por erro</label>
+                        <FluentNumberField @bind-Value="modelo.PenalidadeErro" Min="0" Max="100" Step="0.5" Disabled="congelada" />
+                    </div>
+                    <div class="campo" style="justify-content:flex-end">
+                        <FluentCheckbox @bind-Value="modelo.NotaMinimaZero" Label="Nota mínima é zero" Disabled="congelada" />
+                    </div>
+                }
+                <div class="campo">
+                    <label>Tempo limite (minutos, opcional)</label>
+                    <FluentNumberField @bind-Value="modelo.TempoLimiteMin" Min="1" Max="600" Disabled="congelada" />
+                </div>
+            </div>
+            <p class="suave pequeno mt">@DescricaoRegra</p>
+        </div>
+
+        <div class="cartao">
+            <div class="linha-entre">
+                <h2 style="margin:0">Questões da prova (@modelo.Questoes.Count)</h2>
+                <span class="suave">Nota máxima: <strong>@UiExtensions.Nota(NotaMaxima)</strong></span>
+            </div>
+            <ValidationMessage For="() => modelo.Questoes" />
+            @if (modelo.Questoes.Count == 0)
+            {
+                <p class="suave">Nenhuma questão adicionada. Use a busca abaixo para montar sua prova.</p>
+            }
+            <table class="tabela mt">
+                <tbody>
+                    @for (var i = 0; i < modelo.Questoes.Count; i++)
+                    {
+                        var indice = i;
+                        var item = modelo.Questoes[i];
+                        <tr @key="item.QuestaoId">
+                            <td style="width:36px"><strong>@(indice + 1)</strong></td>
+                            <td>
+                                <div class="pequeno suave">#@item.QuestaoId · @item.Tipo.Nome() @(item.Banca is null ? "" : $"· {item.Banca}") @(item.Ano is null ? "" : $"· {item.Ano}")</div>
+                                @TextoUtil.Resumo(item.Enunciado, 160)
+                            </td>
+                            @if (modelo.Regra == RegraPontuacao.PesoPersonalizado)
+                            {
+                                <td style="width:110px">
+                                    <FluentNumberField @bind-Value="item.Peso" Min="0.1" Max="100" Step="0.5" Disabled="congelada" Style="width:100px" />
+                                </td>
+                            }
+                            <td style="width:130px; white-space:nowrap">
+                                <button type="button" class="botao-icone" title="Subir" disabled="@(congelada || indice == 0)" @onclick="() => Mover(indice, -1)">⬆️</button>
+                                <button type="button" class="botao-icone" title="Descer" disabled="@(congelada || indice == modelo.Questoes.Count - 1)" @onclick="() => Mover(indice, 1)">⬇️</button>
+                                <button type="button" class="botao-icone" title="Remover" disabled="@congelada" @onclick="() => modelo.Questoes.RemoveAt(indice)">🗑️</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (!congelada)
+        {
+            <div class="cartao">
+                <h2>Adicionar questões</h2>
+                <div class="filtros">
+                    <div class="campo" style="grid-column: span 2">
+                        <label>Buscar no banco</label>
+                        <FluentTextField @bind-Value="busca.Busca" Placeholder="Palavra-chave ou assunto" Style="width:100%" />
+                    </div>
+                    <div class="campo">
+                        <label>Banca</label>
+                        <FluentTextField @bind-Value="busca.Banca" />
+                    </div>
+                    <div class="campo" style="justify-content:flex-end">
+                        <FluentCheckbox @bind-Value="busca.SomenteMinhas" Label="Só minhas questões" />
+                    </div>
+                </div>
+                <div class="linha mt" style="justify-content:flex-end">
+                    <FluentButton OnClick="() => Buscar(1)" Loading="buscando">Buscar</FluentButton>
+                </div>
+                @if (encontradas is not null)
+                {
+                    @if (encontradas.Items.Count == 0)
+                    {
+                        <p class="suave mt">Nenhuma questão encontrada.</p>
+                    }
+                    <div class="mt">
+                        @foreach (var q in encontradas.Items)
+                        {
+                            var jaAdicionada = modelo.Questoes.Any(x => x.QuestaoId == q.Id);
+                            <div class="linha-entre @UiExtensions.ClasseSaldo(q.SaldoVotos)" style="padding:10px 0; border-bottom:1px solid var(--rpp-borda)">
+                                <div style="flex:1; min-width:0">
+                                    <div class="pequeno suave">#@q.Id · @q.Tipo.Nome() @(q.Banca is null ? "" : $"· {q.Banca}") · 👍 @q.SaldoVotos · @string.Join(", ", q.Assuntos)</div>
+                                    @TextoUtil.Resumo(q.Enunciado, 180)
+                                </div>
+                                <FluentButton Appearance="@(jaAdicionada ? Appearance.Neutral : Appearance.Accent)" Disabled="jaAdicionada" OnClick="() => Adicionar(q)">
+                                    @(jaAdicionada ? "✔ Adicionada" : "+ Adicionar")
+                                </FluentButton>
+                            </div>
+                        }
+                    </div>
+                    <Paginacao Pagina="encontradas.Page" TotalPaginas="encontradas.TotalPages" PaginaChanged="Buscar" />
+                }
+            </div>
+        }
+
+        <div class="linha mt" style="justify-content:flex-end">
+            <FluentButton OnClick="@(() => Navigation.NavigateTo(Id is null ? "/provas" : $"/provas/{Id}"))">Cancelar</FluentButton>
+            <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Loading="salvando">
+                @(Id is null ? "Publicar prova (+15 XP)" : "Salvar alterações")
+            </FluentButton>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int? Id { get; set; }
+
+    private ProvaEdicaoDto? modelo;
+    private bool congelada;
+    private bool salvando;
+    private bool buscando;
+    private readonly QuestaoFiltro busca = new() { PageSize = 10, Ordem = "votadas" };
+    private PagedResult<QuestaoResumoDto>? encontradas;
+
+    private decimal NotaMaxima => modelo is null ? 0 : modelo.Regra == RegraPontuacao.PesoPersonalizado
+        ? modelo.Questoes.Sum(q => q.Peso)
+        : modelo.Questoes.Count * modelo.PontosAcerto;
+
+    private string DescricaoRegra => modelo?.Regra switch
+    {
+        RegraPontuacao.CespeAnulacao => "Cada acerto soma pontos e cada erro desconta. Questões em branco não pontuam, como nas provas do Cebraspe.",
+        RegraPontuacao.PesoPersonalizado => "Cada questão tem um peso próprio. Acertos somam o peso da questão e erros não descontam.",
+        _ => "Cada acerto soma os pontos definidos. Erros e questões em branco não descontam."
+    };
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id is null)
+        {
+            modelo = new ProvaEdicaoDto();
+            await Buscar(1);
+            return;
+        }
+
+        try
+        {
+            modelo = await Api.ObterEdicaoAsync(Id.Value);
+            congelada = (await Api.ObterAsync(Id.Value)).PossuiTentativas;
+            if (!congelada) await Buscar(1);
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+            Navigation.NavigateTo($"/provas/{Id}");
+        }
+    }
+
+    private async Task Buscar(int pagina)
+    {
+        buscando = true;
+        try
+        {
+            busca.Page = pagina;
+            encontradas = await QuestoesApi.ListarAsync(busca);
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+        }
+        buscando = false;
+    }
+
+    private void Adicionar(QuestaoResumoDto q)
+    {
+        modelo!.Questoes.Add(new ProvaQuestaoItemDto
+        {
+            QuestaoId = q.Id,
+            Enunciado = q.Enunciado,
+            Tipo = q.Tipo,
+            Banca = q.Banca,
+            Ano = q.Ano,
+            Assuntos = q.Assuntos,
+            Peso = 1
+        });
+    }
+
+    private void Mover(int indice, int direcao)
+    {
+        var destino = indice + direcao;
+        if (destino < 0 || destino >= modelo!.Questoes.Count) return;
+        (modelo.Questoes[indice], modelo.Questoes[destino]) = (modelo.Questoes[destino], modelo.Questoes[indice]);
+    }
+
+    private async Task Salvar()
+    {
+        salvando = true;
+        try
+        {
+            if (Id is null)
+            {
+                var criado = await Api.CriarAsync(modelo!);
+                Sessao.AplicarRecompensa(criado.Recompensa);
+                Toast.ShowSuccess("Prova publicada! Compartilhe com seus colegas. 🎉");
+                Navigation.NavigateTo($"/provas/{criado.Id}");
+            }
+            else
+            {
+                await Api.AtualizarAsync(Id.Value, modelo!);
+                Toast.ShowSuccess("Prova atualizada.");
+                Navigation.NavigateTo($"/provas/{Id}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+        }
+        salvando = false;
+    }
+}

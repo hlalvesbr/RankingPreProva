@@ -1,0 +1,179 @@
+@page "/provas/{Id:int}"
+@attribute [Authorize]
+@inject ProvasApi Api
+@inject IToastService Toast
+@inject NavigationManager Navigation
+
+<PageTitle>@(prova?.Titulo ?? "Prova") · RankingPreProva</PageTitle>
+
+@if (erro is not null)
+{
+    <div class="estado-vazio">
+        <div class="estado-icone">🗃️</div>
+        <h2>@erro</h2>
+        <FluentButton OnClick="@(() => Navigation.NavigateTo("/provas"))">Voltar às provas</FluentButton>
+    </div>
+}
+else if (prova is null)
+{
+    <Carregando />
+}
+else
+{
+    <div class="cartao mb @UiExtensions.ClasseSaldo(prova.SaldoVotos, prova.Status)">
+        <div class="prova-capa mb"></div>
+        <div class="linha-entre">
+            <div>
+                <a href="/provas" class="pequeno">← Provas</a>
+                <h1>@prova.Titulo</h1>
+                <div class="linha" style="gap:6px">
+                    @if (!string.IsNullOrEmpty(prova.ConcursoSimulado)) { <span class="etiqueta etiqueta-primaria">🎯 @prova.ConcursoSimulado</span> }
+                    @if (!string.IsNullOrEmpty(prova.Banca)) { <span class="etiqueta etiqueta-primaria">🏛️ @prova.Banca</span> }
+                    @if (!string.IsNullOrEmpty(prova.Cargo)) { <span class="etiqueta">💼 @prova.Cargo</span> }
+                    @if (!string.IsNullOrEmpty(prova.Orgao)) { <span class="etiqueta">🏢 @prova.Orgao</span> }
+                    @if (prova.Ano is int ano) { <span class="etiqueta">📅 @ano</span> }
+                    @if (prova.Status == StatusItem.EmRevisao) { <span class="etiqueta etiqueta-erro">⚠️ Em revisão</span> }
+                    @if (prova.Status == StatusItem.Arquivado) { <span class="etiqueta">🗄️ Arquivada</span> }
+                    @if (prova.SaldoVotos < 0) { <span class="etiqueta etiqueta-alerta">👎 Mal avaliada</span> }
+                </div>
+            </div>
+            <div class="linha">
+                <VotoControl Saldo="prova.SaldoVotos" MeuVoto="prova.MeuVoto" Desabilitado="prova.EhAutor" Votar="Votar" />
+                <FavoritoToggle Favorito="prova.Favorita" AoAlternar="() => Api.FavoritarAsync(Id)" />
+                <DenunciaBotao AlvoTipo="AlvoTipo.Prova" AlvoId="Id" Desabilitado="prova.EhAutor" />
+            </div>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(prova.Descricao))
+        {
+            <p class="mt" style="white-space:pre-wrap">@prova.Descricao</p>
+        }
+
+        <div class="grade-4 mt">
+            <div class="estatistica"><strong>@prova.TotalQuestoes</strong><span>questões</span></div>
+            <div class="estatistica"><strong>@(prova.TempoLimiteMin is int t ? $"{t} min" : "Livre")</strong><span>tempo</span></div>
+            <div class="estatistica"><strong>@prova.TotalParticipantes</strong><span>participantes</span></div>
+            <div class="estatistica"><strong>@RegraCurta</strong><span>pontuação</span></div>
+        </div>
+
+        @if (prova.Assuntos.Count > 0)
+        {
+            <div class="linha mt" style="gap:6px">
+                <span class="suave pequeno">Assuntos:</span>
+                @foreach (var a in prova.Assuntos)
+                {
+                    <span class="etiqueta etiqueta-assunto">#@a</span>
+                }
+            </div>
+        }
+
+        <div class="linha-entre mt">
+            <span class="suave pequeno">Criada por <a href="/perfil/@prova.AutorId">@prova.AutorNome</a> em @UiExtensions.DataCurta(prova.CriadoEm)</span>
+            <div class="linha">
+                @if (prova.EhAutor)
+                {
+                    <FluentButton OnClick="@(() => Navigation.NavigateTo($"/provas/{Id}/editar"))" Disabled="@(prova.Status == StatusItem.Arquivado)">✏️ Editar</FluentButton>
+                    <FluentButton OnClick="() => confirmarExclusao = true" Disabled="@(prova.Status == StatusItem.Arquivado)">🗑️ Excluir</FluentButton>
+                }
+                @if (prova.Status != StatusItem.Arquivado && prova.TotalQuestoes > 0)
+                {
+                    <FluentButton Appearance="Appearance.Accent" OnClick="@(() => Navigation.NavigateTo($"/provas/{Id}/responder"))">
+                        @BotaoPrincipal
+                    </FluentButton>
+                }
+            </div>
+        </div>
+
+        @if (prova.MinhaPrimeira is { } minha)
+        {
+            <FluentMessageBar Intent="MessageIntent.Success" AllowDismiss="false" Class="mt">
+                Sua nota no ranking: <strong>@UiExtensions.Nota(minha.Nota) / @UiExtensions.Nota(minha.NotaMaxima)</strong>
+                (@minha.Acertos acertos em @TextoUtil.Duracao(minha.DuracaoSeg)).
+                <a href="/provas/@Id/resultado/@minha.TentativaId">Ver correção</a>. Novas tentativas contam apenas como treino.
+            </FluentMessageBar>
+        }
+    </div>
+
+    <div class="cartao">
+        <h2>🏆 Ranking</h2>
+        <RankingProva Ranking="ranking" />
+    </div>
+
+    <Modal @bind-Aberto="confirmarExclusao" Titulo="Excluir prova?">
+        <ChildContent>
+            <p>Se a prova já tiver tentativas, ela será <strong>arquivada</strong> para preservar o histórico dos participantes.</p>
+        </ChildContent>
+        <Rodape>
+            <FluentButton OnClick="() => confirmarExclusao = false">Cancelar</FluentButton>
+            <FluentButton Appearance="Appearance.Accent" OnClick="Excluir">Confirmar</FluentButton>
+        </Rodape>
+    </Modal>
+}
+
+@code {
+    [Parameter] public int Id { get; set; }
+
+    private ProvaDto? prova;
+    private RankingProvaDto? ranking;
+    private string? erro;
+    private bool confirmarExclusao;
+
+    private string RegraCurta => prova!.Regra switch
+    {
+        RegraPontuacao.CespeAnulacao => "Erro anula",
+        RegraPontuacao.PesoPersonalizado => "Com pesos",
+        _ => "Simples"
+    };
+
+    private string BotaoPrincipal => prova!.MinhaTentativaEmAndamento is not null
+        ? "▶️ Continuar prova"
+        : prova.MinhaPrimeira is not null ? "🔁 Treinar novamente" : "🚀 Iniciar prova";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        prova = null;
+        ranking = null;
+        erro = null;
+        try
+        {
+            prova = await Api.ObterAsync(Id);
+            ranking = await Api.RankingAsync(Id);
+        }
+        catch (ApiException ex)
+        {
+            erro = ex.Message;
+        }
+    }
+
+    private async Task<VotoResultadoDto?> Votar(int valor)
+    {
+        try
+        {
+            var r = await Api.VotarAsync(Id, valor);
+            prova!.SaldoVotos = r.SaldoVotos;
+            prova.MeuVoto = r.MeuVoto;
+            StateHasChanged();
+            return r;
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+            return null;
+        }
+    }
+
+    private async Task Excluir()
+    {
+        try
+        {
+            await Api.ExcluirAsync(Id);
+            Toast.ShowSuccess("Prova removida.");
+            Navigation.NavigateTo("/provas/minhas");
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+        }
+        confirmarExclusao = false;
+    }
+}

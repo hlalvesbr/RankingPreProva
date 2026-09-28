@@ -1,0 +1,23 @@
+<div class="dica-estudo">
+    <div class="dica-titulo">💡 Dica de estudo</div>
+    <p>@dica</p>
+</div>
+
+@code {
+    private static readonly string[] Dicas =
+    [
+        "Revise os erros: a explicação de uma questão errada vale mais que dez acertos.",
+        "Use a técnica Pomodoro: 25 minutos de foco e 5 de pausa.",
+        "Em provas no estilo Cebraspe, deixar em branco pode ser melhor que chutar.",
+        "Leia o edital como um mapa: priorize os assuntos com mais peso.",
+        "Responder questões da mesma banca ajuda a entender o estilo dela.",
+        "Mantenha a sequência: 20 questões por dia fazem diferença no fim do mês.",
+        "Crie questões sobre o que estudou. Ensinar é a melhor forma de aprender.",
+        "Simule o dia da prova: respeite o tempo e evite consultas.",
+        "Durma bem. A memória se consolida durante o sono."
+    ];
+
+    private string dica = Dicas[0];
+
+    protected override void OnInitialized() => dica = Dicas[Random.Shared.Next(Dicas.Length)];
+}

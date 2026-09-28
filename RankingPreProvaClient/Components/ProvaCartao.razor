@@ -1,0 +1,60 @@
+@inject ProvasApi Api
+@inject IToastService Toast
+
+<a class="cartao cartao-clicavel prova-cartao @UiExtensions.ClasseSaldo(Prova.SaldoVotos, Prova.Status)" href="/provas/@Prova.Id">
+    <div class="prova-capa"></div>
+    <div class="linha-entre">
+        <div class="linha" style="gap:6px">
+            @if (!string.IsNullOrEmpty(Prova.Banca)) { <span class="etiqueta etiqueta-primaria">@Prova.Banca</span> }
+            <span class="etiqueta">@Prova.Regra.Nome()</span>
+            @if (!Prova.Publica) { <span class="etiqueta">🔗 Não listada</span> }
+            @if (Prova.Status == StatusItem.EmRevisao) { <span class="etiqueta etiqueta-erro">Em revisão</span> }
+            @if (Prova.Status == StatusItem.Arquivado) { <span class="etiqueta">Arquivada</span> }
+        </div>
+        <span @onclick:preventDefault @onclick:stopPropagation>
+            <VotoControl Saldo="Prova.SaldoVotos" MeuVoto="Prova.MeuVoto" Desabilitado="EhAutor" Votar="Votar" />
+        </span>
+    </div>
+    <h3>@Prova.Titulo</h3>
+    <div class="suave pequeno">
+        @(string.Join(" · ", new[] { Prova.ConcursoSimulado, Prova.Cargo }.Where(s => !string.IsNullOrWhiteSpace(s))))
+    </div>
+    <div class="prova-rodape">
+        <span>📄 @Prova.TotalQuestoes questões</span>
+        @if (Prova.TempoLimiteMin is int t) { <span>⏱️ @t min</span> }
+        <span>👥 @Prova.TotalParticipantes</span>
+        <span>por @Prova.AutorNome</span>
+    </div>
+</a>
+
+@code {
+    [Parameter, EditorRequired] public ProvaResumoDto Prova { get; set; } = default!;
+    [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
+
+    private bool EhAutor;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (AuthState is not null)
+        {
+            var user = (await AuthState).User;
+            EhAutor = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value == Prova.AutorId.ToString();
+        }
+    }
+
+    private async Task<VotoResultadoDto?> Votar(int valor)
+    {
+        try
+        {
+            var r = await Api.VotarAsync(Prova.Id, valor);
+            Prova.SaldoVotos = r.SaldoVotos;
+            Prova.MeuVoto = r.MeuVoto;
+            return r;
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+            return null;
+        }
+    }
+}

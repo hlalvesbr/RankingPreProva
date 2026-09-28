@@ -1,0 +1,38 @@
+<div class="questao-meta">
+    <span class="etiqueta etiqueta-primaria">#@Questao.Id</span>
+    @switch (Questao.Origem)
+    {
+        case OrigemQuestao.Banca:
+            <span class="etiqueta etiqueta-primaria">🏛️ @(Questao.Banca ?? "Banca")</span>
+            break;
+        case OrigemQuestao.IA:
+            <span class="etiqueta etiqueta-ia">🤖 Gerada por IA</span>
+            break;
+        default:
+            <span class="etiqueta">✍️ Autoral</span>
+            break;
+    }
+    @if (Questao.Ano is int ano) { <span class="etiqueta">📅 @ano</span> }
+    @if (!string.IsNullOrEmpty(Questao.Concurso)) { <span class="etiqueta" title="Concurso">🎯 @Questao.Concurso</span> }
+    @if (!string.IsNullOrEmpty(Questao.Cargo)) { <span class="etiqueta" title="Cargo">💼 @Questao.Cargo</span> }
+    <span class="etiqueta">@Questao.Tipo.Nome()</span>
+    <span class="etiqueta">@IconeDificuldade @Questao.Dificuldade.Nome()</span>
+    @if (Questao.Status == StatusItem.EmRevisao) { <span class="etiqueta etiqueta-erro">⚠️ Em revisão</span> }
+    @if (Questao.Status == StatusItem.Arquivado) { <span class="etiqueta">🗄️ Arquivada</span> }
+    @if (Questao.SaldoVotos < 0) { <span class="etiqueta etiqueta-alerta" title="Avaliada negativamente pela comunidade">👎 Mal avaliada</span> }
+    @foreach (var a in Questao.Assuntos)
+    {
+        <a class="etiqueta etiqueta-assunto" href="/questoes?assunto=@Uri.EscapeDataString(a)">#@a</a>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public QuestaoResumoDto Questao { get; set; } = default!;
+
+    private string IconeDificuldade => Questao.Dificuldade switch
+    {
+        Dificuldade.Facil => "🟢",
+        Dificuldade.Media => "🟡",
+        _ => "🔴"
+    };
+}

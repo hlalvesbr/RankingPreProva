@@ -1,0 +1,32 @@
+<span class="votos" title="@(Desabilitado ? "Você não pode votar no seu próprio conteúdo" : "Vote para ajudar a comunidade")">
+    <button type="button" class="voto-botao @(MeuVoto == 1 ? "ativo-cima" : "")" disabled="@(Desabilitado || ocupado)"
+            aria-label="Voto positivo" @onclick="() => Clicar(1)" @onclick:stopPropagation @onclick:preventDefault>👍</button>
+    <span class="voto-saldo @ClasseSaldo @(animar ? "mudou" : "")" @key="Saldo">@Saldo</span>
+    <button type="button" class="voto-botao @(MeuVoto == -1 ? "ativo-baixo" : "")" disabled="@(Desabilitado || ocupado)"
+            aria-label="Voto negativo" @onclick="() => Clicar(-1)" @onclick:stopPropagation @onclick:preventDefault>👎</button>
+</span>
+
+@code {
+    [Parameter] public int Saldo { get; set; }
+    [Parameter] public int MeuVoto { get; set; }
+    [Parameter] public bool Desabilitado { get; set; }
+    [Parameter, EditorRequired] public Func<int, Task<VotoResultadoDto?>> Votar { get; set; } = default!;
+
+    private bool ocupado;
+    private bool animar;
+
+    private string ClasseSaldo => Saldo > 0 ? "positivo" : Saldo < 0 ? "negativo" : "";
+
+    private async Task Clicar(int valor)
+    {
+        ocupado = true;
+        var r = await Votar(valor);
+        if (r is not null)
+        {
+            Saldo = r.SaldoVotos;
+            MeuVoto = r.MeuVoto;
+            animar = true;
+        }
+        ocupado = false;
+    }
+}

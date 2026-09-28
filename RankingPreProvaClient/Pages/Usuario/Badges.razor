@@ -1,0 +1,92 @@
+@page "/badges"
+@attribute [Authorize]
+@inject UsuariosApi Api
+@inject SessaoState Sessao
+@inject IToastService Toast
+
+<PageTitle>Conquistas · RankingPreProva</PageTitle>
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1>🏅 Conquistas</h1>
+        <p>Desbloqueie badges estudando com constância, criando conteúdo e subindo nos rankings.</p>
+    </div>
+    @if (badges is not null)
+    {
+        <span class="etiqueta etiqueta-primaria" style="font-size:14px">@badges.Count(b => b.Conquistada) de @badges.Count desbloqueadas</span>
+    }
+</div>
+
+@if (Sessao.Usuario is { } u)
+{
+    var inicio = Niveis.XpParaNivel(u.Nivel);
+    var fim = Niveis.XpParaNivel(u.Nivel + 1);
+    <div class="cartao mb">
+        <div class="linha-entre">
+            <div>
+                <h2 style="margin:0">Nível @u.Nivel · @Niveis.Titulo(u.Nivel)</h2>
+                <span class="suave">@u.Xp XP · faltam @(fim - u.Xp) XP para o nível @(u.Nivel + 1)</span>
+            </div>
+            <span style="font-size:40px" class="animar-flutuar">🎓</span>
+        </div>
+        <div class="barra-progresso mt"><span style="width:@Css(100.0 * (u.Xp - inicio) / Math.Max(1, fim - inicio))%"></span></div>
+        <details class="mt">
+            <summary class="pequeno negrito">Como ganhar XP?</summary>
+            <ul class="pequeno suave">
+                <li>Responder uma questão pela primeira vez: +2 XP (+5 se acertar)</li>
+                <li>Acertar o desafio do dia: +10 XP bônus</li>
+                <li>Concluir uma prova: +20 XP, mais os pontos das questões</li>
+                <li>Ficar no pódio de uma prova: +50 XP</li>
+                <li>Criar uma questão: +10 XP · criar uma prova: +15 XP</li>
+                <li>Receber voto positivo: +1 XP · denúncia aceita: +5 XP</li>
+            </ul>
+        </details>
+    </div>
+}
+
+@if (badges is null)
+{
+    <Carregando />
+}
+else
+{
+    <div class="grade-4">
+        @foreach (var b in badges)
+        {
+            <div class="cartao badge-cartao @(b.Conquistada ? "conquistada" : "bloqueada")">
+                <span class="badge-icone">@b.Icone</span>
+                <h3>@b.Nome</h3>
+                <p>@b.Descricao</p>
+                @if (b.Conquistada)
+                {
+                    <span class="etiqueta etiqueta-sucesso">✔ @UiExtensions.DataCurta(b.ConquistadaEm!.Value)</span>
+                }
+                else
+                {
+                    <div class="barra-progresso"><span style="width:@Css(100.0 * b.Progresso / Math.Max(1, b.Meta))%"></span></div>
+                    <div class="pequeno suave mt">@b.Progresso / @b.Meta</div>
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private List<BadgeDto>? badges;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            if (Sessao.Usuario is null)
+                await Sessao.CarregarAsync();
+            badges = await Api.BadgesAsync();
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+        }
+    }
+
+    private static string Css(double v) => Math.Clamp(v, 0, 100).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+}

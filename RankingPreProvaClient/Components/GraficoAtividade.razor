@@ -1,0 +1,29 @@
+<div class="grafico-barras" style="height:@(Altura)px">
+    @foreach (var d in Dias)
+    {
+        var alturaTotal = max == 0 ? 0 : 100.0 * d.Respostas / max;
+        var alturaAcertos = d.Respostas == 0 ? 0 : 100.0 * d.Acertos / d.Respostas;
+        <div class="barra" title="@($"{d.Data:dd/MM}: {d.Respostas} respostas, {d.Acertos} acertos")">
+            <span>@(d.Respostas > 0 ? d.Respostas : "")</span>
+            <div class="barra-total" style="height:@Css(alturaTotal)%">
+                <div class="barra-acertos" style="height:@Css(alturaAcertos)%"></div>
+            </div>
+            <span>@Rotulo(d.Data)</span>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public List<AtividadeDiaDto> Dias { get; set; } = [];
+    [Parameter] public int Altura { get; set; } = 140;
+
+    private int max;
+
+    protected override void OnParametersSet() => max = Dias.Count == 0 ? 0 : Dias.Max(d => d.Respostas);
+
+    private string Rotulo(DateOnly d) => Dias.Count <= 7
+        ? System.Globalization.CultureInfo.GetCultureInfo("pt-BR").DateTimeFormat.GetAbbreviatedDayName(d.DayOfWeek)
+        : d.Day.ToString();
+
+    private static string Css(double v) => v.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture);
+}

@@ -1,0 +1,24 @@
+@inject IToastService Toast
+
+<button type="button" class="botao-icone @(Favorito ? "favorito-ativo" : "")" @key="Favorito"
+        title="@(Favorito ? "Remover dos favoritos" : "Adicionar aos favoritos")" @onclick="Alternar">
+    @(Favorito ? "⭐" : "☆")
+</button>
+
+@code {
+    [Parameter] public bool Favorito { get; set; }
+    [Parameter, EditorRequired] public Func<Task<FavoritoResultadoDto>> AoAlternar { get; set; } = default!;
+
+    private async Task Alternar()
+    {
+        try
+        {
+            Favorito = (await AoAlternar()).Favorito;
+            Toast.ShowInfo(Favorito ? "Adicionado aos favoritos." : "Removido dos favoritos.");
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+        }
+    }
+}

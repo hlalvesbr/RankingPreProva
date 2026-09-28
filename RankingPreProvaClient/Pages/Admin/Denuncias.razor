@@ -1,0 +1,107 @@
+@page "/admin/denuncias"
+@attribute [Authorize(Policy = "Admin")]
+@inject ModeracaoApi Api
+@inject IToastService Toast
+
+<PageTitle>Moderação · RankingPreProva</PageTitle>
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1>🛡️ Moderação de denúncias</h1>
+        <p>Itens com @LimiteRevisao ou mais denúncias abertas entram automaticamente em revisão.</p>
+    </div>
+    <div class="linha">
+        @foreach (var s in Enum.GetValues<StatusDenuncia>())
+        {
+            <FluentButton Appearance="@(status == s ? Appearance.Accent : Appearance.Neutral)" OnClick="() => Trocar(s)">@NomeStatus(s)</FluentButton>
+        }
+    </div>
+</div>
+
+@if (denuncias is null)
+{
+    <Carregando />
+}
+else if (denuncias.Count == 0)
+{
+    <div class="estado-vazio"><div class="estado-icone">🧹</div><p>Nenhuma denúncia @NomeStatus(status).ToLowerInvariant(). Tudo em ordem!</p></div>
+}
+else
+{
+    @foreach (var d in denuncias)
+    {
+        <div class="cartao @(d.AlvoStatus == StatusItem.EmRevisao ? "item-revisao" : "")">
+            <div class="linha-entre">
+                <div class="linha" style="gap:6px">
+                    <span class="etiqueta etiqueta-primaria">@(d.AlvoTipo == AlvoTipo.Questao ? "Questão" : "Prova") #@d.AlvoId</span>
+                    <span class="etiqueta etiqueta-erro">@d.Motivo.Nome()</span>
+                    <span class="etiqueta">@d.AlvoStatus.Nome()</span>
+                    @if (d.TotalDenunciasAlvo > 1) { <span class="etiqueta etiqueta-alerta">@d.TotalDenunciasAlvo denúncias abertas</span> }
+                </div>
+                <span class="pequeno suave">por @d.AutorNome · @UiExtensions.DataHora(d.CriadaEm)</span>
+            </div>
+            <p class="mt"><a href="@(d.AlvoTipo == AlvoTipo.Questao ? $"/questoes/{d.AlvoId}" : $"/provas/{d.AlvoId}")" target="_blank">@d.AlvoTitulo</a></p>
+            @if (!string.IsNullOrWhiteSpace(d.Detalhe))
+            {
+                <blockquote class="suave" style="margin:0; padding-left:12px; border-left:3px solid var(--rpp-borda)">@d.Detalhe</blockquote>
+            }
+            @if (d.Status == StatusDenuncia.Aberta)
+            {
+                <div class="linha mt" style="justify-content:flex-end">
+                    <FluentButton OnClick="() => Resolver(d, false, false)">Rejeitar</FluentButton>
+                    <FluentButton OnClick="() => Resolver(d, true, false)">Aceitar</FluentButton>
+                    <FluentButton Appearance="Appearance.Accent" OnClick="() => Resolver(d, true, true)">Aceitar e arquivar item</FluentButton>
+                </div>
+            }
+        </div>
+    }
+}
+
+@code {
+    private const int LimiteRevisao = 5;
+    private StatusDenuncia status = StatusDenuncia.Aberta;
+    private List<DenunciaDto>? denuncias;
+
+    protected override Task OnInitializedAsync() => Carregar();
+
+    private static string NomeStatus(StatusDenuncia s) => s switch
+    {
+        StatusDenuncia.Aberta => "Abertas",
+        StatusDenuncia.Aceita => "Aceitas",
+        _ => "Rejeitadas"
+    };
+
+    private async Task Trocar(StatusDenuncia s)
+    {
+        status = s;
+        await Carregar();
+    }
+
+    private async Task Carregar()
+    {
+        denuncias = null;
+        try
+        {
+            denuncias = await Api.ListarAsync(status);
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+            denuncias = [];
+        }
+    }
+
+    private async Task Resolver(DenunciaDto d, bool aceitar, bool arquivar)
+    {
+        try
+        {
+            await Api.ResolverAsync(d.Id, new DenunciaResolverDto { Aceitar = aceitar, ArquivarItem = arquivar });
+            Toast.ShowSuccess(aceitar ? "Denúncia aceita." : "Denúncia rejeitada.");
+            await Carregar();
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+        }
+    }
+}

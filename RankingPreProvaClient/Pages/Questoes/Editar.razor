@@ -1,0 +1,216 @@
+@page "/questoes/nova"
+@page "/questoes/{Id:int}/editar"
+@attribute [Authorize]
+@inject QuestoesApi Api
+@inject SessaoState Sessao
+@inject IToastService Toast
+@inject NavigationManager Navigation
+
+<PageTitle>@(Id is null ? "Nova questão" : "Editar questão") · RankingPreProva</PageTitle>
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1>@(Id is null ? "✍️ Nova questão" : $"✏️ Editar questão #{Id}")</h1>
+        <p>Preencha com capricho: questões bem avaliadas ganham destaque no banco.</p>
+    </div>
+</div>
+
+@if (modelo is null)
+{
+    <Carregando />
+}
+else
+{
+    <EditForm Model="modelo" OnValidSubmit="Salvar">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="cartao">
+            <h2>Enunciado</h2>
+            <div class="coluna">
+                <div class="campo">
+                    <label>Tipo de questão</label>
+                    <div class="linha">
+                        @foreach (var t in Enum.GetValues<TipoQuestao>())
+                        {
+                            <FluentButton Appearance="@(modelo.Tipo == t ? Appearance.Accent : Appearance.Neutral)" OnClick="() => MudarTipo(t)">
+                                @(t == TipoQuestao.MultiplaEscolha ? "🔠" : "⚖️") @t.Nome()
+                            </FluentButton>
+                        }
+                    </div>
+                </div>
+                <div class="campo">
+                    <label>Enunciado *</label>
+                    <FluentTextArea @bind-Value="modelo.Enunciado" Rows="7" Maxlength="8000" Resize="TextAreaResize.Vertical"
+                                    Placeholder="@(modelo.Tipo == TipoQuestao.CertoErrado ? "Escreva a assertiva a ser julgada como certa ou errada…" : "Escreva o enunciado da questão…")" Style="width:100%" />
+                    <ValidationMessage For="() => modelo.Enunciado" />
+                </div>
+            </div>
+        </div>
+
+        <div class="cartao">
+            <h2>@(modelo.Tipo == TipoQuestao.MultiplaEscolha ? "Alternativas e gabarito" : "Gabarito")</h2>
+            @if (modelo.Tipo == TipoQuestao.MultiplaEscolha)
+            {
+                <p class="suave pequeno">Clique na letra para marcá-la como gabarito.</p>
+                <div class="coluna">
+                    @foreach (var alt in modelo.Alternativas)
+                    {
+                        <div class="alternativa-editor">
+                            <button type="button" class="letra-radio @(modelo.Gabarito == alt.Letra ? "gabarito" : "")"
+                                    title="Marcar @alt.Letra como correta" @onclick="() => modelo.Gabarito = alt.Letra">@alt.Letra</button>
+                            <FluentTextArea @bind-Value="alt.Texto" Rows="2" Maxlength="2000" Placeholder="@($"Texto da alternativa {alt.Letra}")" Style="width:100%" />
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="linha">
+                    <FluentButton Appearance="@(modelo.Gabarito == 'C' ? Appearance.Accent : Appearance.Neutral)" OnClick="() => modelo.Gabarito = 'C'">✅ Certo</FluentButton>
+                    <FluentButton Appearance="@(modelo.Gabarito == 'E' ? Appearance.Accent : Appearance.Neutral)" OnClick="() => modelo.Gabarito = 'E'">❌ Errado</FluentButton>
+                </div>
+            }
+            <ValidationMessage For="() => modelo.Gabarito" />
+            <div class="campo mt">
+                <label>Explicação / comentário do gabarito</label>
+                <FluentTextArea @bind-Value="modelo.Explicacao" Rows="4" Maxlength="8000" Resize="TextAreaResize.Vertical"
+                                Placeholder="Explique por que a resposta está correta. Cite a lei, a súmula ou a doutrina." Style="width:100%" />
+            </div>
+        </div>
+
+        <div class="cartao">
+            <h2>Origem e classificação</h2>
+            <div class="grade-3">
+                <div class="campo">
+                    <label>Origem</label>
+                    <select class="select-nativo" @bind="modelo.Origem">
+                        @foreach (var o in Enum.GetValues<OrigemQuestao>())
+                        {
+                            <option value="@o">@o.Nome()</option>
+                        }
+                    </select>
+                </div>
+                <div class="campo">
+                    <label>Ano @(modelo.Origem == OrigemQuestao.Banca ? "de aplicação" : "de criação")</label>
+                    <FluentNumberField @bind-Value="modelo.Ano" Min="1950" Max="2100" />
+                </div>
+                <div class="campo">
+                    <label>Dificuldade</label>
+                    <select class="select-nativo" @bind="modelo.Dificuldade">
+                        @foreach (var d in Enum.GetValues<Dificuldade>())
+                        {
+                            <option value="@d">@d.Nome()</option>
+                        }
+                    </select>
+                </div>
+                @if (modelo.Origem == OrigemQuestao.Banca)
+                {
+                    <div class="campo">
+                        <label>Banca *</label>
+                        <FluentTextField @bind-Value="modelo.Banca" Placeholder="Ex.: Cebraspe, FGV, FCC, Vunesp" Maxlength="120" />
+                    </div>
+                    <div class="campo">
+                        <label>Concurso</label>
+                        <FluentTextField @bind-Value="modelo.Concurso" Placeholder="Ex.: TRF 1ª Região 2024" Maxlength="200" />
+                    </div>
+                    <div class="campo">
+                        <label>Órgão</label>
+                        <FluentTextField @bind-Value="modelo.Orgao" Placeholder="Ex.: Tribunal Regional Federal" Maxlength="200" />
+                    </div>
+                }
+                <div class="campo">
+                    <label>Cargo</label>
+                    <FluentTextField @bind-Value="modelo.Cargo" Placeholder="Ex.: Analista Judiciário" Maxlength="200" />
+                </div>
+            </div>
+            <div class="campo mt">
+                <label>Assuntos * <span class="suave">(até 10, usados na busca)</span></label>
+                <AssuntosEditor @bind-Assuntos="modelo.Assuntos" />
+                <ValidationMessage For="() => modelo.Assuntos" />
+            </div>
+        </div>
+
+        <div class="linha mt" style="justify-content:flex-end">
+            <FluentButton OnClick="@(() => Navigation.NavigateTo(Id is null ? "/questoes" : $"/questoes/{Id}"))">Cancelar</FluentButton>
+            <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Loading="salvando">
+                @(Id is null ? "Publicar questão (+10 XP)" : "Salvar alterações")
+            </FluentButton>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter] public int? Id { get; set; }
+
+    private QuestaoEdicaoDto? modelo;
+    private bool salvando;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id is null)
+        {
+            modelo = new QuestaoEdicaoDto();
+            GarantirAlternativas();
+            return;
+        }
+
+        try
+        {
+            modelo = await Api.ObterEdicaoAsync(Id.Value);
+            GarantirAlternativas();
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+            Navigation.NavigateTo($"/questoes/{Id}");
+        }
+    }
+
+    private void GarantirAlternativas()
+    {
+        if (modelo is null || modelo.Tipo != TipoQuestao.MultiplaEscolha) return;
+        foreach (var letra in Letras.MultiplaEscolha)
+        {
+            if (modelo.Alternativas.All(a => a.Letra != letra))
+                modelo.Alternativas.Add(new AlternativaDto { Letra = letra });
+        }
+        modelo.Alternativas = modelo.Alternativas.OrderBy(a => a.Letra).ToList();
+    }
+
+    private void MudarTipo(TipoQuestao tipo)
+    {
+        modelo!.Tipo = tipo;
+        modelo.Gabarito = null;
+        if (tipo == TipoQuestao.CertoErrado)
+            modelo.Alternativas.Clear();
+        else
+            GarantirAlternativas();
+    }
+
+    private async Task Salvar()
+    {
+        salvando = true;
+        try
+        {
+            if (Id is null)
+            {
+                var criado = await Api.CriarAsync(modelo!);
+                Sessao.AplicarRecompensa(criado.Recompensa);
+                Toast.ShowSuccess("Questão publicada! Obrigado por contribuir. 🙌");
+                Navigation.NavigateTo($"/questoes/{criado.Id}");
+            }
+            else
+            {
+                await Api.AtualizarAsync(Id.Value, modelo!);
+                Toast.ShowSuccess("Questão atualizada.");
+                Navigation.NavigateTo($"/questoes/{Id}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+        }
+        salvando = false;
+    }
+}

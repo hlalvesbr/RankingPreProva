@@ -1,0 +1,26 @@
+@if (Aberto)
+{
+    <div class="nivel-overlay" @onclick="Fechar">
+        <div class="cartao modal-cartao" @onclick:stopPropagation role="dialog" aria-modal="true" aria-label="@Titulo">
+            <div class="linha-entre mb">
+                <h2 style="margin:0">@Titulo</h2>
+                <button type="button" class="botao-icone" aria-label="Fechar" @onclick="Fechar">✖</button>
+            </div>
+            @ChildContent
+            @if (Rodape is not null)
+            {
+                <div class="linha mt" style="justify-content:flex-end">@Rodape</div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Aberto { get; set; }
+    [Parameter] public EventCallback<bool> AbertoChanged { get; set; }
+    [Parameter] public string Titulo { get; set; } = string.Empty;
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? Rodape { get; set; }
+
+    private Task Fechar() => AbertoChanged.InvokeAsync(false);
+}

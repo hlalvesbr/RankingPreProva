@@ -1,0 +1,64 @@
+@implements IDisposable
+@inject SessaoState Sessao
+@inject IJSRuntime JS
+@inject IToastService Toast
+
+@foreach (var bolha in bolhas)
+{
+    <div class="xp-bolha" @key="bolha.Id">+@bolha.Xp XP</div>
+}
+
+@if (nivelNovo is not null)
+{
+    <div class="nivel-overlay" @onclick="() => nivelNovo = null">
+        <div class="nivel-cartao">
+            <div class="nivel-emoji">🚀</div>
+            <h2>Subiu de nível!</h2>
+            <div class="nivel-numero">@nivelNovo</div>
+            <p>Agora você é <strong>@Niveis.Titulo(nivelNovo.Value)</strong>. Continue assim!</p>
+            <FluentButton Appearance="Appearance.Accent">Bora!</FluentButton>
+        </div>
+    </div>
+}
+
+@code {
+    private record Bolha(Guid Id, int Xp);
+    private readonly List<Bolha> bolhas = [];
+    private int? nivelNovo;
+
+    protected override void OnInitialized() => Sessao.RecompensaRecebida += OnRecompensa;
+
+    private void OnRecompensa(RecompensaDto r) => InvokeAsync(async () =>
+    {
+        if (r.XpGanho > 0)
+        {
+            var bolha = new Bolha(Guid.NewGuid(), r.XpGanho);
+            bolhas.Add(bolha);
+            StateHasChanged();
+            _ = RemoverDepois(bolha);
+        }
+
+        foreach (var badge in r.NovasBadges)
+            Toast.ShowSuccess($"{badge.Icone} Nova conquista: {badge.Nome}!");
+
+        if (r.SubiuNivel)
+            nivelNovo = r.Nivel;
+
+        if (r.SubiuNivel || r.NovasBadges.Count > 0)
+            await JS.InvokeVoidAsync("rppFx.confete");
+
+        StateHasChanged();
+    });
+
+    private async Task RemoverDepois(Bolha bolha)
+    {
+        await Task.Delay(1800);
+        await InvokeAsync(() =>
+        {
+            bolhas.Remove(bolha);
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose() => Sessao.RecompensaRecebida -= OnRecompensa;
+}

@@ -1,0 +1,34 @@
+<FluentNavMenu Width="230" Collapsible="false" Title="Menu principal">
+    <FluentNavLink Href="/" Match="NavLinkMatch.All" Icon="@(new Icons.Regular.Size20.Home())">Início</FluentNavLink>
+
+    <AuthorizeView>
+        <Authorized>
+            <FluentNavGroup Title="Questões" Expanded="true" Icon="@(new Icons.Regular.Size20.QuestionCircle())">
+                <FluentNavLink Href="/questoes" Match="NavLinkMatch.All">Banco de questões</FluentNavLink>
+                <FluentNavLink Href="/praticar">Modo prática</FluentNavLink>
+                <FluentNavLink Href="/questoes/nova">Criar questão</FluentNavLink>
+                <FluentNavLink Href="/questoes/minhas">Minhas questões</FluentNavLink>
+            </FluentNavGroup>
+
+            <FluentNavGroup Title="Provas" Expanded="true" Icon="@(new Icons.Regular.Size20.DocumentBulletList())">
+                <FluentNavLink Href="/provas" Match="NavLinkMatch.All">Explorar provas</FluentNavLink>
+                <FluentNavLink Href="/provas/nova">Criar prova</FluentNavLink>
+                <FluentNavLink Href="/provas/minhas">Minhas provas</FluentNavLink>
+            </FluentNavGroup>
+
+            <FluentNavGroup Title="Meu progresso" Expanded="true" Icon="@(new Icons.Regular.Size20.Trophy())">
+                <FluentNavLink Href="/ranking-geral">Ranking geral</FluentNavLink>
+                <FluentNavLink Href="/badges">Conquistas</FluentNavLink>
+                <FluentNavLink Href="/historico">Histórico</FluentNavLink>
+                <FluentNavLink Href="/favoritos">Favoritos</FluentNavLink>
+                <FluentNavLink Href="/perfil">Meu perfil</FluentNavLink>
+            </FluentNavGroup>
+
+            <AuthorizeView Policy="Admin" Context="adminContext">
+                <FluentNavLink Href="/admin/denuncias" Icon="@(new Icons.Regular.Size20.Shield())">Moderação</FluentNavLink>
+            </AuthorizeView>
+        </Authorized>
+    </AuthorizeView>
+
+    <FluentNavLink Href="/sobre" Icon="@(new Icons.Regular.Size20.Info())">Sobre</FluentNavLink>
+</FluentNavMenu>

@@ -1,0 +1,15 @@
+@page "/not-found"
+@layout MainLayout
+
+<PageTitle>Página não encontrada · RankingPreProva</PageTitle>
+
+<div class="estado-vazio">
+    <div class="estado-icone animar-flutuar">🧭</div>
+    <h1>Questão anulada!</h1>
+    <p>A página que você procura não existe ou foi removida.</p>
+    <FluentButton Appearance="Appearance.Accent" OnClick="@(() => Navigation.NavigateTo("/"))">Voltar ao início</FluentButton>
+</div>
+
+@code {
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+}

@@ -1,0 +1,125 @@
+@page "/perfil"
+@attribute [Authorize]
+@inject UsuariosApi Api
+@inject SessaoState Sessao
+@inject IToastService Toast
+
+<PageTitle>Meu perfil · RankingPreProva</PageTitle>
+
+@if (usuario is null || modelo is null)
+{
+    <Carregando />
+}
+else
+{
+    <div class="cartao mb">
+        <div class="perfil-topo">
+            <Avatar Nome="@usuario.Nome" Url="@usuario.AvatarUrl" Tamanho="84" />
+            <div style="flex:1">
+                <h1>@usuario.Nome</h1>
+                <div class="suave">@usuario.Email · membro desde @UiExtensions.DataCurta(usuario.CriadoEm)</div>
+                <div class="linha mt" style="gap:6px">
+                    <span class="etiqueta etiqueta-primaria">Nível @usuario.Nivel · @Niveis.Titulo(usuario.Nivel)</span>
+                    <span class="etiqueta etiqueta-alerta">🔥 Recorde: @usuario.MaiorSequencia dias</span>
+                    @if (usuario.EhAdmin) { <span class="etiqueta etiqueta-ia">🛡️ Moderador</span> }
+                </div>
+            </div>
+            <a href="/perfil/@(usuario.Apelido ?? usuario.Id.ToString())">Ver perfil público →</a>
+        </div>
+        <div class="grade-4 mt">
+            <div class="estatistica"><strong>@usuario.Xp</strong><span>XP total</span></div>
+            <div class="estatistica"><strong>@usuario.TotalRespostas</strong><span>respostas</span></div>
+            <div class="estatistica"><strong>@(usuario.TotalRespostas == 0 ? "0%" : UiExtensions.Pct(100.0 * usuario.TotalAcertos / usuario.TotalRespostas))</strong><span>acertos</span></div>
+            <div class="estatistica"><strong>@usuario.TotalQuestoesCriadas / @usuario.TotalProvasCriadas</strong><span>questões / provas criadas</span></div>
+        </div>
+    </div>
+
+    <EditForm Model="modelo" OnValidSubmit="Salvar">
+        <DataAnnotationsValidator />
+        <div class="cartao">
+            <h2>Dados do perfil</h2>
+            <div class="grade-2">
+                <div class="campo">
+                    <label>Nome de exibição *</label>
+                    <FluentTextField @bind-Value="modelo.Nome" Maxlength="120" />
+                    <ValidationMessage For="() => modelo.Nome" />
+                </div>
+                <div class="campo">
+                    <label>Apelido (URL do perfil público)</label>
+                    <FluentTextField @bind-Value="modelo.Apelido" Maxlength="40" Placeholder="ex.: maria.concurseira" />
+                    <ValidationMessage For="() => modelo.Apelido" />
+                </div>
+                <div class="campo">
+                    <label>Cargo almejado</label>
+                    <FluentTextField @bind-Value="modelo.CargoAlvo" Maxlength="200" Placeholder="Ex.: Auditor Fiscal" />
+                </div>
+                <div class="campo">
+                    <label>Concurso almejado</label>
+                    <FluentTextField @bind-Value="modelo.ConcursoAlvo" Maxlength="200" Placeholder="Ex.: Receita Federal" />
+                </div>
+                <div class="campo">
+                    <label>Meta diária de questões</label>
+                    <FluentNumberField @bind-Value="modelo.MetaDiaria" Min="1" Max="500" />
+                    <ValidationMessage For="() => modelo.MetaDiaria" />
+                </div>
+                <div class="campo" style="grid-column: span 2">
+                    <label>Sobre você</label>
+                    <FluentTextArea @bind-Value="modelo.Bio" Rows="3" Maxlength="500" Placeholder="Conte um pouco da sua jornada de estudos…" Style="width:100%" />
+                </div>
+            </div>
+            <div class="linha mt" style="justify-content:flex-end">
+                <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Loading="salvando">Salvar</FluentButton>
+            </div>
+        </div>
+    </EditForm>
+
+    <div class="cartao">
+        <h2>Conta</h2>
+        <p class="suave">Você entra com sua conta Google (<strong>@usuario.Email</strong>). A foto de perfil é sincronizada a cada login.</p>
+        <a href="/account/logout" target="_top">🚪 Sair da conta</a>
+    </div>
+}
+
+@code {
+    private UsuarioDto? usuario;
+    private PerfilEdicaoDto? modelo;
+    private bool salvando;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            usuario = await Api.MeAsync();
+            modelo = new PerfilEdicaoDto
+            {
+                Nome = usuario.Nome,
+                Apelido = usuario.Apelido,
+                Bio = usuario.Bio,
+                CargoAlvo = usuario.CargoAlvo,
+                ConcursoAlvo = usuario.ConcursoAlvo,
+                MetaDiaria = usuario.MetaDiaria
+            };
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+        }
+    }
+
+    private async Task Salvar()
+    {
+        salvando = true;
+        try
+        {
+            await Api.AtualizarPerfilAsync(modelo!);
+            await Sessao.CarregarAsync();
+            usuario = Sessao.Usuario ?? usuario;
+            Toast.ShowSuccess("Perfil atualizado! ✨");
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+        }
+        salvando = false;
+    }
+}

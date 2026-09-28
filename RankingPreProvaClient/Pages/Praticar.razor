@@ -1,0 +1,115 @@
+@page "/praticar"
+@attribute [Authorize]
+@inject QuestoesApi Api
+@inject IToastService Toast
+@inject IJSRuntime JS
+
+<PageTitle>Modo prática · RankingPreProva</PageTitle>
+
+<div class="cabecalho-pagina">
+    <div>
+        <h1>⚡ Modo prática</h1>
+        <p>Questões sorteadas conforme seus filtros. Responda, aprenda com a explicação e siga para a próxima.</p>
+    </div>
+    @if (sessaoRespondidas > 0)
+    {
+        <div class="cartao" style="padding:10px 16px">
+            <strong>@sessaoAcertos</strong> / @sessaoRespondidas acertos nesta sessão
+            @if (sequenciaAcertos >= 3) { <span class="etiqueta etiqueta-alerta" style="margin-left:6px">🔥 @sequenciaAcertos seguidas!</span> }
+        </div>
+    }
+</div>
+
+@if (!iniciado)
+{
+    <FiltrosQuestao Filtro="filtro" AoAplicar="Iniciar" MostrarOrdem="false" TextoBotao="Começar a praticar" />
+}
+else if (carregando)
+{
+    <Carregando Texto="Sorteando uma questão…" />
+}
+else if (questao is null)
+{
+    <div class="estado-vazio">
+        <div class="estado-icone">🏁</div>
+        <h2>Acabaram as questões para estes filtros!</h2>
+        <p>Você respondeu tudo o que havia. Que tal mudar os filtros?</p>
+        <FluentButton Appearance="Appearance.Accent" OnClick="() => iniciado = false">Alterar filtros</FluentButton>
+    </div>
+}
+else
+{
+    <div class="linha-entre mb">
+        <FluentButton OnClick="() => iniciado = false">⚙️ Filtros</FluentButton>
+        <div class="linha">
+            <FavoritoToggle Favorito="questao.Favorita" AoAlternar="() => Api.FavoritarAsync(questao.Id)" />
+            <DenunciaBotao AlvoTipo="AlvoTipo.Questao" AlvoId="questao.Id" Desabilitado="questao.EhAutor" />
+            <a href="/questoes/@questao.Id" class="pequeno">Abrir questão</a>
+        </div>
+    </div>
+    <div class="cartao animar-entrada @UiExtensions.ClasseSaldo(questao.SaldoVotos, questao.Status)" @key="questao.Id">
+        <QuestaoMeta Questao="questao" />
+        <QuestaoResolver Questao="questao" Respondida="Respondida" PermitirRefazer="false" />
+    </div>
+    <div class="linha mt" style="justify-content:flex-end">
+        <FluentButton OnClick="Proxima">Pular</FluentButton>
+        <FluentButton Appearance="Appearance.Accent" Disabled="!respondida" OnClick="Proxima">Próxima questão →</FluentButton>
+    </div>
+}
+
+@code {
+    private readonly QuestaoFiltro filtro = new() { NaoRespondidas = true, Ordem = "aleatoria", PageSize = 1 };
+    private readonly HashSet<int> vistas = [];
+    private QuestaoDto? questao;
+    private bool iniciado;
+    private bool carregando;
+    private bool respondida;
+    private int sessaoRespondidas;
+    private int sessaoAcertos;
+    private int sequenciaAcertos;
+
+    private async Task Iniciar()
+    {
+        iniciado = true;
+        vistas.Clear();
+        await Proxima();
+    }
+
+    private async Task Proxima()
+    {
+        carregando = true;
+        respondida = false;
+        try
+        {
+            filtro.Ordem = "aleatoria";
+            filtro.PageSize = 10;
+            filtro.Page = 1;
+            var pagina = await Api.ListarAsync(filtro);
+            var escolhida = pagina.Items.FirstOrDefault(q => !vistas.Contains(q.Id));
+            questao = escolhida is null ? null : await Api.ObterAsync(escolhida.Id);
+            if (questao is not null) vistas.Add(questao.Id);
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+            questao = null;
+        }
+        carregando = false;
+        await JS.InvokeVoidAsync("rppFx.topo");
+    }
+
+    private void Respondida(RespostaResultadoDto r)
+    {
+        respondida = true;
+        sessaoRespondidas++;
+        if (r.Correta)
+        {
+            sessaoAcertos++;
+            sequenciaAcertos++;
+        }
+        else
+        {
+            sequenciaAcertos = 0;
+        }
+    }
+}

@@ -1,0 +1,139 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@inject SessaoState Sessao
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<FluentDesignTheme Mode="DesignThemeModes.Light" CustomColor="#1f5f6b" />
+<FluentToastProvider Position="ToastPosition.BottomRight" MaxToastCount="4" />
+<FluentDialogProvider />
+<FluentTooltipProvider />
+
+<div class="app-shell">
+    <header class="app-header">
+        <a href="/" class="logo" title="Início">
+            <span class="logo-icone">📚</span>
+            <span class="logo-texto">Ranking<span>PreProva</span></span>
+        </a>
+
+        <AuthorizeView>
+            <Authorized>
+                <div class="busca-global">
+                    <FluentSearch Placeholder="Buscar questões por assunto, banca, concurso…"
+                                  @bind-Value="termoBusca" @bind-Value:after="Buscar" Style="width: 100%;" />
+                </div>
+
+                <div class="header-status">
+                    @if (Sessao.Usuario is { } u)
+                    {
+                        <div class="sequencia @(u.SequenciaDias > 0 ? "ativa" : "")" title="Dias seguidos estudando">
+                            🔥 <strong>@u.SequenciaDias</strong>
+                        </div>
+                        <XpMedidor Xp="u.Xp" Nivel="u.Nivel" />
+                    }
+                    <MenuUsuario />
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                <div class="header-status">
+                    <FluentButton Appearance="Appearance.Accent" OnClick="Entrar">
+                        <span class="google-g">G</span> Entrar com Google
+                    </FluentButton>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
+    </header>
+
+    <div class="app-body">
+        <nav class="app-nav">
+            <NavMenu />
+        </nav>
+
+        <main class="app-main">
+            <ErrorBoundary @ref="errorBoundary">
+                <ChildContent>
+                    @Body
+                </ChildContent>
+                <ErrorContent>
+                    <div class="estado-vazio">
+                        <div class="estado-icone">😵</div>
+                        <h2>Ops! Algo deu errado.</h2>
+                        <p>Não foi possível exibir esta tela.</p>
+                        <FluentButton Appearance="Appearance.Accent" OnClick="Recuperar">Tentar novamente</FluentButton>
+                    </div>
+                </ErrorContent>
+            </ErrorBoundary>
+        </main>
+
+        <aside class="app-ads">
+            <div class="ads-fixo">
+                <AdSlot Posicao="lateral" Altura="600" />
+                <DicaEstudo />
+            </div>
+        </aside>
+    </div>
+
+    <footer class="app-footer">
+        @if (!EmProva)
+        {
+            <AdSlot Posicao="rodape" Altura="90" />
+        }
+        <div class="rodape-links">
+            <span>© @DateTime.Today.Year RankingPreProva · Estude, pratique, suba no ranking.</span>
+            <a href="/sobre">Sobre</a>
+            <a href="/privacidade">Privacidade</a>
+            <a href="/termos">Termos de uso</a>
+        </div>
+    </footer>
+</div>
+
+<XpCelebracao />
+
+@code {
+    private string? termoBusca;
+    private ErrorBoundary? errorBoundary;
+
+    [CascadingParameter] private Task<AuthenticationState>? AuthState { get; set; }
+
+    private bool EmProva => Navigation.Uri.Contains("/responder", StringComparison.OrdinalIgnoreCase);
+
+    protected override async Task OnInitializedAsync()
+    {
+        Sessao.Mudou += OnMudou;
+        Navigation.LocationChanged += OnLocationChanged;
+
+        if (AuthState is not null && (await AuthState).User.Identity?.IsAuthenticated == true && Sessao.Usuario is null)
+            await Sessao.CarregarAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await JS.InvokeVoidAsync("rppFx.pronto");
+    }
+
+    private void Buscar()
+    {
+        if (string.IsNullOrWhiteSpace(termoBusca)) return;
+        Navigation.NavigateTo($"/questoes?busca={Uri.EscapeDataString(termoBusca)}");
+        termoBusca = null;
+    }
+
+    private void Entrar() => Navigation.NavigateTo("account/login?returnUrl=%2F", forceLoad: true);
+
+    private void Recuperar() => errorBoundary?.Recover();
+
+    private void OnMudou() => InvokeAsync(StateHasChanged);
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        errorBoundary?.Recover();
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        Sessao.Mudou -= OnMudou;
+        Navigation.LocationChanged -= OnLocationChanged;
+    }
+}

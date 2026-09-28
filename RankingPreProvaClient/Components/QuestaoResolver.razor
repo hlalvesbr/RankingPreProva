@@ -1,0 +1,126 @@
+@inject QuestoesApi Api
+@inject SessaoState Sessao
+@inject IToastService Toast
+
+<p class="questao-enunciado">@Questao.Enunciado</p>
+
+<div class="alternativas @(Questao.Tipo == TipoQuestao.CertoErrado ? "alternativas-ce" : "")">
+    @foreach (var alt in Questao.Alternativas)
+    {
+        <button type="button" class="alternativa @Classe(alt.Letra)" disabled="@(resultado is not null)"
+                title="Clique com o botão direito para riscar a alternativa"
+                @onclick="() => Selecionar(alt.Letra)"
+                @oncontextmenu="() => Riscar(alt.Letra)" @oncontextmenu:preventDefault>
+            <span class="letra">@alt.Letra</span>
+            <span class="texto">@alt.Texto</span>
+        </button>
+    }
+</div>
+
+@if (resultado is null)
+{
+    <div class="linha mt">
+        <FluentButton Appearance="Appearance.Accent" Disabled="@(selecionada is null)" Loading="enviando" OnClick="Responder">Responder</FluentButton>
+        <span class="suave pequeno">Dica: clique com o botão direito para riscar alternativas.</span>
+    </div>
+}
+else
+{
+    <div class="feedback @(resultado.Correta ? "feedback-acerto" : "feedback-erro")">
+        <div class="feedback-titulo">
+            @(resultado.Correta ? Acertos[Questao.Id % Acertos.Length] : Erros[Questao.Id % Erros.Length])
+        </div>
+        <div>
+            Gabarito: <strong>@resultado.Gabarito</strong>
+            @if (resultado.Recompensa.XpGanho > 0) { <span class="etiqueta etiqueta-sucesso" style="margin-left:8px">+@resultado.Recompensa.XpGanho XP</span> }
+            <span class="suave pequeno" style="margin-left:8px">
+                @UiExtensions.Pct(resultado.TotalRespostas == 0 ? 0 : 100.0 * resultado.TotalAcertos / resultado.TotalRespostas) da comunidade acertou
+            </span>
+        </div>
+        @if (!string.IsNullOrWhiteSpace(resultado.Explicacao))
+        {
+            <details class="mt" open="@(!resultado.Correta)">
+                <summary class="negrito">📖 Explicação</summary>
+                <p class="explicacao">@resultado.Explicacao</p>
+            </details>
+        }
+    </div>
+    @if (PermitirRefazer)
+    {
+        <div class="linha mt">
+            <FluentButton OnClick="Refazer">Refazer</FluentButton>
+        </div>
+    }
+}
+
+@code {
+    [Parameter, EditorRequired] public QuestaoDto Questao { get; set; } = default!;
+    [Parameter] public EventCallback<RespostaResultadoDto> Respondida { get; set; }
+    [Parameter] public bool PermitirRefazer { get; set; } = true;
+
+    private static readonly string[] Acertos = ["🎉 Mandou bem!", "✅ Na mosca!", "🚀 Acertou em cheio!", "🧠 Cérebro afiado!", "👏 Isso aí!"];
+    private static readonly string[] Erros = ["😬 Quase! Revise a explicação.", "❌ Não foi dessa vez.", "📚 Errar faz parte. Bora revisar!", "🤔 Pegadinha da banca!"];
+
+    private char? selecionada;
+    private readonly HashSet<char> riscadas = [];
+    private RespostaResultadoDto? resultado;
+    private bool enviando;
+    private int questaoAtual;
+
+    protected override void OnParametersSet()
+    {
+        if (questaoAtual != Questao.Id)
+        {
+            questaoAtual = Questao.Id;
+            Refazer();
+        }
+    }
+
+    private void Selecionar(char letra)
+    {
+        selecionada = letra;
+        riscadas.Remove(letra);
+    }
+
+    private void Riscar(char letra)
+    {
+        if (resultado is not null) return;
+        if (!riscadas.Add(letra)) riscadas.Remove(letra);
+        if (selecionada == letra) selecionada = null;
+    }
+
+    private string Classe(char letra)
+    {
+        if (resultado is not null)
+        {
+            if (letra == resultado.Gabarito) return "correta";
+            if (letra == selecionada) return "errada";
+            return "";
+        }
+        return (selecionada == letra ? "selecionada " : "") + (riscadas.Contains(letra) ? "riscada" : "");
+    }
+
+    private async Task Responder()
+    {
+        if (selecionada is null) return;
+        enviando = true;
+        try
+        {
+            resultado = await Api.ResponderAsync(Questao.Id, selecionada.Value);
+            Sessao.AplicarRecompensa(resultado.Recompensa);
+            await Respondida.InvokeAsync(resultado);
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+        }
+        enviando = false;
+    }
+
+    private void Refazer()
+    {
+        resultado = null;
+        selecionada = null;
+        riscadas.Clear();
+    }
+}

@@ -1,0 +1,11 @@
+@inject NavigationManager Navigation
+
+<Carregando Texto="Redirecionando para o login…" />
+
+@code {
+    protected override void OnInitialized()
+    {
+        var retorno = "/" + Navigation.ToBaseRelativePath(Navigation.Uri);
+        Navigation.NavigateTo($"account/login?returnUrl={Uri.EscapeDataString(retorno)}", forceLoad: true);
+    }
+}
