@@ -25,6 +25,8 @@ namespace RankingPreProva
             builder.Services.AddScoped<IUsuarioService, UsuarioService>();
             builder.Services.AddScoped<IQuestaoRepository, QuestaoRepository>();
             builder.Services.AddScoped<IQuestaoService, QuestaoService>();
+            builder.Services.AddScoped<IProvaRepository, ProvaRepository>();
+            builder.Services.AddScoped<IProvaService, ProvaService>();
 
             var app = builder.Build();
 

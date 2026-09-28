@@ -1,0 +1,105 @@
+@page "/provas/nova"
+@page "/provas/editar/{Id:int}"
+@using RankingPreProva.Models
+@using RankingPreProva.Services
+@inject IProvaService ProvaService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
+
+<PageTitle>@(EhEdicao ? "Editar Prova" : "Nova Prova")</PageTitle>
+
+<h1>@(EhEdicao ? "Editar Prova" : "Nova Prova")</h1>
+
+@if (carregando)
+{
+    <p><em>Carregando...</em></p>
+}
+else if (prova is null)
+{
+    <div class="alert alert-warning" role="alert">
+        Prova não encontrada.
+    </div>
+}
+else
+{
+    <EditForm Model="prova" OnValidSubmit="SalvarAsync" FormName="provaForm">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        @if (!string.IsNullOrEmpty(mensagemErro))
+        {
+            <div class="alert alert-danger" role="alert">@mensagemErro</div>
+        }
+
+        <div class="mb-3">
+            <label for="titulo" class="form-label">Título</label>
+            <InputText id="titulo" class="form-control" @bind-Value="prova.Titulo" />
+            <ValidationMessage For="() => prova.Titulo" />
+        </div>
+
+        <div class="mb-3">
+            <label for="descricao" class="form-label">Descrição</label>
+            <InputTextArea id="descricao" class="form-control" rows="4" @bind-Value="prova.Descricao" />
+            <ValidationMessage For="() => prova.Descricao" />
+        </div>
+
+        <button type="submit" class="btn btn-primary" disabled="@salvando">
+            @(salvando ? "Salvando..." : "Salvar")
+        </button>
+        <a class="btn btn-secondary" href="provas">Cancelar</a>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    private Prova? prova;
+    private bool carregando = true;
+    private bool salvando;
+    private string? mensagemErro;
+
+    private bool EhEdicao => Id.HasValue;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        carregando = true;
+
+        if (Id.HasValue)
+        {
+            prova = await ProvaService.ObterAsync(Id.Value);
+        }
+        else
+        {
+            prova = new Prova();
+        }
+
+        carregando = false;
+    }
+
+    private async Task SalvarAsync()
+    {
+        if (prova is null)
+        {
+            return;
+        }
+
+        salvando = true;
+        mensagemErro = null;
+
+        var resultado = EhEdicao
+            ? await ProvaService.AtualizarAsync(prova)
+            : await ProvaService.CriarAsync(prova);
+
+        salvando = false;
+
+        if (resultado.Sucesso)
+        {
+            Navigation.NavigateTo("provas");
+        }
+        else
+        {
+            mensagemErro = resultado.Erro;
+        }
+    }
+}
