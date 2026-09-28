@@ -1,4 +1,3 @@
-using RankingPreProvaServer.Client.Pages;
 using RankingPreProvaServer.Components;
 
 namespace RankingPreProvaServer
@@ -35,7 +34,7 @@ namespace RankingPreProvaServer
             app.MapStaticAssets();
             app.MapRazorComponents<App>()
                 .AddInteractiveWebAssemblyRenderMode()
-                .AddAdditionalAssemblies(typeof(Client._Imports).Assembly);
+                .AddAdditionalAssemblies(typeof(RankingPreProvaClient._Imports).Assembly);
 
             app.Run();
         }

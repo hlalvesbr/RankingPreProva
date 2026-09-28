@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 
-namespace RankingPreProvaServer.Client
+namespace RankingPreProvaClient
 {
     internal class Program
     {
