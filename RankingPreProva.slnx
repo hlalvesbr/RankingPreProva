@@ -1,3 +1,4 @@
 <Solution>
-  <Project Path="RankingPreProva.csproj" />
+  <Project Path="RankingPreProvaClient/RankingPreProvaClient.csproj" />
+  <Project Path="RankingPreProvaServer/RankingPreProvaServer.csproj" />
 </Solution>
