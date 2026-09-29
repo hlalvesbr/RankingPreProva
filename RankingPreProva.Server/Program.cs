@@ -18,8 +18,10 @@ namespace RankingPreProva.Server
 				.AddInteractiveWebAssemblyComponents();
 
 			// Configure the PostgreSQL database context.
+			var connectionString = ConverterDatabaseUrl(builder.Configuration["DATABASE_URL"])
+				?? builder.Configuration.GetConnectionString("DefaultConnection");
 			builder.Services.AddDbContext<ApplicationDbContext>(options =>
-				options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+				options.UseNpgsql(connectionString));
 
 			builder.AddAppAuthentication();
 			builder.Services.AddCascadingAuthenticationState();
@@ -64,6 +66,19 @@ namespace RankingPreProva.Server
 				.AddAdditionalAssemblies(typeof(RankingPreProva.Client._Imports).Assembly);
 
 			app.Run();
+		}
+
+		// Heroku fornece DATABASE_URL no formato postgres://usuario:senha@host:porta/banco
+		private static string? ConverterDatabaseUrl(string? databaseUrl)
+		{
+			if (string.IsNullOrWhiteSpace(databaseUrl))
+				return null;
+
+			var uri = new Uri(databaseUrl);
+			var credenciais = uri.UserInfo.Split(':', 2);
+			return $"Host={uri.Host};Port={(uri.Port > 0 ? uri.Port : 5432)};Database={uri.AbsolutePath.TrimStart('/')};" +
+				$"Username={Uri.UnescapeDataString(credenciais[0])};Password={Uri.UnescapeDataString(credenciais[1])};" +
+				"SSL Mode=Require;Trust Server Certificate=true";
 		}
 	}
 }
