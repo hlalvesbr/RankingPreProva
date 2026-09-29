@@ -4,6 +4,7 @@
 @inject ProvasApi Api
 @inject IToastService Toast
 @inject NavigationManager Navigation
+@implements IDisposable
 
 <PageTitle>@Titulo · RankingPréProva</PageTitle>
 
@@ -70,8 +71,25 @@ else
     private bool Minhas => Navigation.Uri.Contains("/provas/minhas", StringComparison.OrdinalIgnoreCase);
     private string Titulo => Minhas ? "Minhas provas" : "Explorar provas";
 
+    private bool? ultimoMinhas;
+
+    protected override void OnInitialized() => Navigation.LocationChanged += AoMudarLocal;
+
+    private async void AoMudarLocal(object? sender, LocationChangedEventArgs e)
+    {
+        if (ultimoMinhas == Minhas) return;
+        await InvokeAsync(async () =>
+        {
+            await OnParametersSetAsync();
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose() => Navigation.LocationChanged -= AoMudarLocal;
+
     protected override async Task OnParametersSetAsync()
     {
+        ultimoMinhas = Minhas;
         filtro.SomenteMinhas = Minhas;
         filtro.Page = 1;
         await Carregar();

@@ -4,6 +4,7 @@
 @inject QuestoesApi Api
 @inject IToastService Toast
 @inject NavigationManager Navigation
+@implements IDisposable
 
 <PageTitle>@Titulo · RankingPréProva</PageTitle>
 
@@ -61,13 +62,32 @@ else
     private bool Minhas => Navigation.Uri.Contains("/questoes/minhas", StringComparison.OrdinalIgnoreCase);
     private string Titulo => Minhas ? "Minhas questões" : "Questões";
 
-    protected override async Task OnInitializedAsync() => usuarioId = await AuthState.UsuarioIdAsync();
+    private bool? ultimoMinhas;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Navigation.LocationChanged += AoMudarLocal;
+        usuarioId = await AuthState.UsuarioIdAsync();
+    }
+
+    private async void AoMudarLocal(object? sender, LocationChangedEventArgs e)
+    {
+        if (ultimoMinhas == Minhas) return;
+        await InvokeAsync(async () =>
+        {
+            await OnParametersSetAsync();
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose() => Navigation.LocationChanged -= AoMudarLocal;
 
     protected override async Task OnParametersSetAsync()
     {
         filtro.Busca = Busca;
         filtro.Assunto = Assunto is null ? null : TextoUtil.Slug(Assunto);
         filtro.Banca = Banca;
+        ultimoMinhas = Minhas;
         filtro.SomenteMinhas = Minhas;
         filtro.Page = 1;
         await Carregar();
