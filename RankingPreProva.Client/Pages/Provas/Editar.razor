@@ -29,7 +29,7 @@ else
         </FluentMessageBar>
     }
 
-    <EditForm Model="modelo" OnValidSubmit="Salvar">
+    <EditForm Model="modelo" OnValidSubmit="Salvar" id="form-prova">
         <DataAnnotationsValidator />
         <ValidationSummary />
 
@@ -145,11 +145,13 @@ else
                 </tbody>
             </table>
         </div>
+    </EditForm>
 
         @if (!congelada)
         {
-            <div class="cartao">
+            <div class="cartao mt">
                 <h2>Adicionar questões</h2>
+                <form @onsubmit="() => Buscar(1)">
                 <div class="filtros">
                     <div class="campo" style="grid-column: span 2">
                         <label>Buscar no banco</label>
@@ -164,8 +166,9 @@ else
                     </div>
                 </div>
                 <div class="linha mt" style="justify-content:flex-end">
-                    <FluentButton OnClick="() => Buscar(1)" Loading="buscando">Buscar</FluentButton>
+                    <FluentButton Type="ButtonType.Submit" Loading="buscando">Buscar</FluentButton>
                 </div>
+                </form>
                 @if (encontradas is not null)
                 {
                     @if (encontradas.Items.Count == 0)
@@ -194,11 +197,10 @@ else
 
         <div class="linha mt" style="justify-content:flex-end">
             <FluentButton OnClick="@(() => Navigation.NavigateTo(Id is null ? "/provas" : $"/provas/{Id}"))">Cancelar</FluentButton>
-            <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Loading="salvando">
+            <FluentButton Type="ButtonType.Submit" FormId="form-prova" Appearance="Appearance.Accent" Loading="salvando">
                 @(Id is null ? "Publicar prova (+15 XP)" : "Salvar alterações")
             </FluentButton>
         </div>
-    </EditForm>
 }
 
 @code {
