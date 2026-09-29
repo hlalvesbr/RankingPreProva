@@ -452,11 +452,18 @@ h1:focus { outline: none; }
     animation: xp-pop 1.8s ease forwards; pointer-events: none;
 }
 .nivel-overlay { position: fixed; inset: 0; z-index: 300; background: rgba(20, 35, 40, .55); display: grid; place-items: center; animation: surgir .2s ease; }
-.nivel-cartao { background: #fff;
-.nivel-emoji { font-size: 56px; animation: foguete 1.2s ease-in-out infinite; }
+.nivel-cartao {
+    background: #fff; border: 1px solid var(--rpp-borda); border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(20, 35, 40, .35); padding: 32px 40px;
+    text-align: center; max-width: 92vw; animation: zoom .3s ease; cursor: default;
+}
+.nivel-emoji
 .nivel-numero { font-family: var(--rpp-fonte-titulo); font-size: 64px; font-weight: 900; color: var(--rpp-primaria); line-height: 1; margin: 8px 0; }
 
-.confete { position: fixed;
+.confete {
+    position: fixed; top: -12px; width: 10px; height: 14px; z-index: 400;
+    pointer-events: none; animation-name: cair; animation-timing-function: ease-in; animation-fill-mode: forwards;
+}
 
 .animar-flutuar { animation: flutuar 3s ease-in-out infinite; display: inline-block; }
 .modal-cartao { width: 560px; max-width: 92vw; max-height: 86vh; overflow: auto; animation: zoom .25s ease; cursor: default; }
