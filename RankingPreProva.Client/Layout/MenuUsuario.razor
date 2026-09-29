@@ -1,10 +1,15 @@
 @inject SessaoState Sessao
+@implements IDisposable
 
-<details class="menu-usuario">
-    <summary>
+@if (aberto)
+{
+    <div class="menu-usuario-fundo" @onclick="Fechar"></div>
+}
+<details class="menu-usuario" open="@aberto">
+    <summary @onclick="Alternar" @onclick:preventDefault>
         <Avatar Nome="@(Sessao.Usuario?.Nome ?? "?")" Url="@Sessao.Usuario?.AvatarUrl" Tamanho="36" />
     </summary>
-    <div class="menu-usuario-painel">
+    <div class="menu-usuario-painel" @onclick="Fechar">
         @if (Sessao.Usuario is { } u)
         {
             <div class="menu-usuario-topo">
@@ -21,3 +26,17 @@
         <a href="/account/logout" target="_top">🚪 Sair</a>
     </div>
 </details>
+
+@code {
+    private bool aberto;
+
+    private void Alternar() => aberto = !aberto;
+
+    private void Fechar() => aberto = false;
+
+    protected override void OnInitialized() => Sessao.Mudou += OnMudou;
+
+    private void OnMudou() => InvokeAsync(StateHasChanged);
+
+    public void Dispose() => Sessao.Mudou -= OnMudou;
+}

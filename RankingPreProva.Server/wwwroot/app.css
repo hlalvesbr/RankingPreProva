@@ -106,7 +106,8 @@ h1:focus { outline: none; }
 
 .google-g { display: inline-flex; width: 20px; height: 20px; align-items: center; justify-content: center; border-radius: 50%; background: #fff; color: #4285f4; font-weight: 700; margin-right: 6px; }
 
-.menu-usuario { position: relative; }
+.menu-usuario { position: relative; z-index: 1001; }
+.menu-usuario-fundo { position: fixed; inset: 0; z-index: 1000; background: transparent; }
 .menu-usuario summary { list-style: none; cursor: pointer; border-radius: 50%; }
 .menu-usuario summary::-webkit-details-marker { display: none; }
 .menu-usuario-painel {
