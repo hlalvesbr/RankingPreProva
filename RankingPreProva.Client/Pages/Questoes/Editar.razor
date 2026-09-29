@@ -52,6 +52,18 @@ else
             <h2>@(modelo.Tipo == TipoQuestao.MultiplaEscolha ? "Alternativas e gabarito" : "Gabarito")</h2>
             @if (modelo.Tipo == TipoQuestao.MultiplaEscolha)
             {
+                <div class="campo">
+                    <label>Quantidade de alternativas</label>
+                    <div class="linha">
+                        @for (var n = Letras.MinimoAlternativas; n <= Letras.MaximoAlternativas; n++)
+                        {
+                            var qtd = n;
+                            <FluentButton Appearance="@(modelo.Alternativas.Count == qtd ? Appearance.Accent : Appearance.Neutral)" OnClick="() => MudarQuantidade(qtd)">
+                                @qtd (A a @Letras.MultiplaEscolha[qtd - 1])
+                            </FluentButton>
+                        }
+                    </div>
+                </div>
                 <p class="suave pequeno">Clique na letra para marcá-la como gabarito.</p>
                 <div class="coluna">
                     @foreach (var alt in modelo.Alternativas)
@@ -170,12 +182,29 @@ else
     private void GarantirAlternativas()
     {
         if (modelo is null || modelo.Tipo != TipoQuestao.MultiplaEscolha) return;
-        foreach (var letra in Letras.MultiplaEscolha)
+        var quantidade = modelo.Alternativas.Count == 0
+            ? Letras.MaximoAlternativas
+            : Math.Clamp(modelo.Alternativas.Count, Letras.MinimoAlternativas, Letras.MaximoAlternativas);
+        foreach (var letra in Letras.MultiplaEscolha.Take(quantidade))
         {
             if (modelo.Alternativas.All(a => a.Letra != letra))
                 modelo.Alternativas.Add(new AlternativaDto { Letra = letra });
         }
         modelo.Alternativas = modelo.Alternativas.OrderBy(a => a.Letra).ToList();
+    }
+
+    private void MudarQuantidade(int quantidade)
+    {
+        var letras = Letras.MultiplaEscolha.Take(quantidade).ToArray();
+        modelo!.Alternativas.RemoveAll(a => !letras.Contains(a.Letra));
+        foreach (var letra in letras)
+        {
+            if (modelo.Alternativas.All(a => a.Letra != letra))
+                modelo.Alternativas.Add(new AlternativaDto { Letra = letra });
+        }
+        modelo.Alternativas = modelo.Alternativas.OrderBy(a => a.Letra).ToList();
+        if (modelo.Gabarito is char g && !letras.Contains(g))
+            modelo.Gabarito = null;
     }
 
     private void MudarTipo(TipoQuestao tipo)

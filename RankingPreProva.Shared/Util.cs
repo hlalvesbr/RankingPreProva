@@ -78,6 +78,8 @@ public static class Letras
 {
     public static readonly char[] MultiplaEscolha = ['A', 'B', 'C', 'D', 'E'];
     public static readonly char[] CertoErrado = ['C', 'E'];
+    public const int MinimoAlternativas = 4;
+    public const int MaximoAlternativas = 5;
 
     public static char[] Para(TipoQuestao tipo) => tipo == TipoQuestao.CertoErrado ? CertoErrado : MultiplaEscolha;
 }

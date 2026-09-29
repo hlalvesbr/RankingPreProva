@@ -82,8 +82,14 @@ public class QuestaoEdicaoDto : IValidatableObject
         var letras = Letras.Para(Tipo);
         if (Tipo == TipoQuestao.MultiplaEscolha)
         {
-            if (Alternativas.Count != letras.Length || Alternativas.Any(a => string.IsNullOrWhiteSpace(a.Texto)))
-                yield return new ValidationResult("Preencha as 5 alternativas (A a E).", [nameof(Alternativas)]);
+            if (Alternativas.Count < Letras.MinimoAlternativas || Alternativas.Count > Letras.MaximoAlternativas)
+                yield return new ValidationResult($"A questão deve ter entre {Letras.MinimoAlternativas} e {Letras.MaximoAlternativas} alternativas.", [nameof(Alternativas)]);
+            else
+            {
+                letras = letras.Take(Alternativas.Count).ToArray();
+                if (Alternativas.Any(a => string.IsNullOrWhiteSpace(a.Texto)))
+                    yield return new ValidationResult($"Preencha as {letras.Length} alternativas (A a {letras[^1]}).", [nameof(Alternativas)]);
+            }
         }
         if (Gabarito is null || !letras.Contains(char.ToUpperInvariant(Gabarito.Value)))
             yield return new ValidationResult("Gabarito inválido para o tipo da questão.", [nameof(Gabarito)]);
