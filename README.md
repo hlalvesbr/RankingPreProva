@@ -1,4 +1,4 @@
-# RankingPreProva
+# RankingPréProva
 
 Plataforma gamificada de preparação para concursos públicos: banco global de questões, provas criadas pela comunidade, rankings, XP, níveis, sequência de estudos e conquistas.
 
