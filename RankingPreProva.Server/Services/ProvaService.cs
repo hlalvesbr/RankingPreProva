@@ -21,7 +21,7 @@ public class ProvaService(ApplicationDbContext db, GamificacaoService gamificaca
         SaldoVotos = p.SaldoVotos,
         MeuVoto = db.Votos.Where(v => v.UsuarioId == uid && v.AlvoTipo == AlvoTipo.Prova && v.AlvoId == p.Id).Select(v => v.Valor).FirstOrDefault(),
         AutorId = p.AutorId,
-        AutorNome = p.Autor.NomeExibicao,
+        AutorNome = p.Autor.Apelido ?? p.Autor.NomeExibicao,
         TempoLimiteMin = p.TempoLimiteMin,
         Regra = p.Regra,
         Status = p.Status,

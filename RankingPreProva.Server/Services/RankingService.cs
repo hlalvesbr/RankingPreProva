@@ -24,7 +24,7 @@ public class RankingService(ApplicationDbContext db)
             .Select(t => new RankingItemDto
             {
                 UsuarioId = t.UsuarioId,
-                Nome = t.Usuario.NomeExibicao,
+                Nome = t.Usuario.Apelido ?? t.Usuario.NomeExibicao,
                 Apelido = t.Usuario.Apelido,
                 AvatarUrl = t.Usuario.AvatarUrl,
                 Nivel = t.Usuario.Nivel,

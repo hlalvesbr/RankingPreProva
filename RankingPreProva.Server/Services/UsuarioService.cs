@@ -84,7 +84,14 @@ public class UsuarioService(ApplicationDbContext db, IConfiguration config, Gami
         u.CargoAlvo = dto.CargoAlvo?.Trim();
         u.ConcursoAlvo = dto.ConcursoAlvo?.Trim();
         u.MetaDiaria = dto.MetaDiaria;
-        await db.SaveChangesAsync();
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (ex.InnerException is Npgsql.PostgresException { SqlState: Npgsql.PostgresErrorCodes.UniqueViolation })
+        {
+            throw new RegraNegocioException("Este apelido já está em uso.");
+        }
     }
 
     public async Task<PerfilPublicoDto> PerfilPublicoAsync(string idOuApelido)
@@ -284,7 +291,7 @@ public class UsuarioService(ApplicationDbContext db, IConfiguration config, Gami
             {
                 Posicao = x.Posicao,
                 UsuarioId = u.Id,
-                Nome = u.NomeExibicao,
+                Nome = u.Apelido ?? u.NomeExibicao,
                 Apelido = u.Apelido,
                 AvatarUrl = u.AvatarUrl,
                 Nivel = u.Nivel,

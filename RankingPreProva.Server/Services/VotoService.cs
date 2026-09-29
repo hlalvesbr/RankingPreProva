@@ -138,7 +138,7 @@ public class DenunciaService(ApplicationDbContext db, GamificacaoService gamific
                 AlvoStatus = alvo.Status,
                 Motivo = d.Motivo,
                 Detalhe = d.Detalhe,
-                AutorNome = d.Autor.NomeExibicao,
+                AutorNome = d.Autor.Apelido ?? d.Autor.NomeExibicao,
                 CriadaEm = d.CriadaEm,
                 Status = d.Status,
                 TotalDenunciasAlvo = contagem.FirstOrDefault(c => c.AlvoTipo == d.AlvoTipo && c.AlvoId == d.AlvoId)?.Total ?? 0
