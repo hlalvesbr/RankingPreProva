@@ -5,8 +5,8 @@ Plataforma gamificada de preparação para concursos públicos: banco global de 
 ## Stack
 
 - **.NET 10** · Blazor Web App com renderização **Interactive WebAssembly** global (sem prerender)
-- **RankingPreProvaServer**: host, Minimal APIs (`/api/*`), autenticação Google OAuth + cookie, EF Core + PostgreSQL
-- **RankingPreProvaClient**: páginas Blazor WASM com **FluentUI Blazor 4**
+- **RankingPreProva.Server**: host, Minimal APIs (`/api/*`), autenticação Google OAuth + cookie, EF Core + PostgreSQL
+- **RankingPreProva.Client**: páginas Blazor WASM com **FluentUI Blazor 4**
 - **RankingPreProva.Shared**: DTOs, enums e utilitários compartilhados
 
 ## Primeiros passos
@@ -15,10 +15,10 @@ Plataforma gamificada de preparação para concursos públicos: banco global de 
 2. Aplique as migrations:
 
    ```powershell
-   dotnet ef database update --project RankingPreProvaServer
+   dotnet ef database update --project RankingPreProva.Server
    ```
 
-3. Configure o login com Google (veja abaixo) e execute o projeto `RankingPreProvaServer`.
+3. Configure o login com Google (veja abaixo) e execute o projeto `RankingPreProva.Server`.
 
 > **Sem credenciais do Google em Development**, o app usa um login simulado:
 > `/account/login-dev?n=1` entra como "Usuário Dev 1" (administrador). Use `n=2`, `n=3`… para simular outros usuários e testar rankings.
@@ -30,7 +30,7 @@ Plataforma gamificada de preparação para concursos públicos: banco global de 
 3. Registre os segredos com user-secrets:
 
    ```powershell
-   cd RankingPreProvaServer
+   cd RankingPreProva.Server
    dotnet user-secrets init
    dotnet user-secrets set "Authentication:Google:ClientId" "SEU_CLIENT_ID"
    dotnet user-secrets set "Authentication:Google:ClientSecret" "SEU_CLIENT_SECRET"
@@ -55,7 +55,7 @@ dotnet user-secrets set "AdSense:Slots:Rodape" "1234567890"
 dotnet user-secrets set "AdSense:Slots:Conteudo" "1234567890"
 ```
 
-Atualize também `RankingPreProvaServer/wwwroot/ads.txt` com o seu `pub-id`. Durante a resolução de provas, o anúncio do rodapé é ocultado para não distrair.
+Atualize também `RankingPreProva.Server/wwwroot/ads.txt` com o seu `pub-id`. Durante a resolução de provas, o anúncio do rodapé é ocultado para não distrair.
 
 ## Regras principais
 

@@ -1,5 +1,5 @@
 <Solution>
   <Project Path="RankingPreProva.Shared/RankingPreProva.Shared.csproj" />
-  <Project Path="RankingPreProvaClient/RankingPreProvaClient.csproj" />
-  <Project Path="RankingPreProvaServer/RankingPreProvaServer.csproj" />
+  <Project Path="RankingPreProva.Client/RankingPreProva.Client.csproj" />
+  <Project Path="RankingPreProva.Server/RankingPreProva.Server.csproj" />
 </Solution>
