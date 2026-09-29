@@ -6,7 +6,9 @@
         <span class="assunto-chip">#@a <button type="button" aria-label="Remover @a" @onclick="() => Remover(a)">×</button></span>
     }
     <input placeholder="@(Assuntos.Count == 0 ? "Digite um assunto e tecle Enter (ex.: Direito Constitucional)" : "Adicionar assunto…")"
-           value="@termo" @oninput="Digitar" @onkeydown="Tecla" maxlength="100" />
+           value="@termo" @oninput="Digitar" @onkeydown="Tecla" maxlength="100"
+           form="assuntos-editor-sem-form" enterkeyhint="enter" />
+    @* O atributo "form" aponta para um id inexistente, desvinculando o input do formulário pai: assim o Enter não dispara a submissão implícita. *@
 </div>
 @if (sugestoes.Count > 0)
 {
