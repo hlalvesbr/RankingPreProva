@@ -2,7 +2,7 @@
 @inject SessaoState Sessao
 @inject IToastService Toast
 
-<p class="questao-enunciado">@Questao.Enunciado</p>
+<MarkdownView Class="questao-enunciado" Texto="@Questao.Enunciado" />
 
 <div class="alternativas @(Questao.Tipo == TipoQuestao.CertoErrado ? "alternativas-ce" : "")">
     @foreach (var alt in Questao.Alternativas)
@@ -12,7 +12,7 @@
                 @onclick="() => Selecionar(alt.Letra)"
                 @oncontextmenu="() => Riscar(alt.Letra)" @oncontextmenu:preventDefault>
             <span class="letra">@alt.Letra</span>
-            <span class="texto">@alt.Texto</span>
+            <span class="texto"><MarkdownView Texto="@alt.Texto" /></span>
         </button>
     }
 </div>

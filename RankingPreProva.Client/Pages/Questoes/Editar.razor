@@ -41,8 +41,8 @@ else
                 </div>
                 <div class="campo">
                     <label>Enunciado *</label>
-                    <FluentTextArea @bind-Value="modelo.Enunciado" Rows="7" Maxlength="8000" Resize="TextAreaResize.Vertical"
-                                    Placeholder="@(modelo.Tipo == TipoQuestao.CertoErrado ? "Escreva a assertiva a ser julgada como certa ou errada…" : "Escreva o enunciado da questão…")" Style="width:100%" />
+                    <MarkdownEditor @bind-Value="modelo.Enunciado" Rows="7" Maxlength="8000"
+                                    Placeholder="@(modelo.Tipo == TipoQuestao.CertoErrado ? "Escreva a assertiva a ser julgada como certa ou errada…" : "Escreva o enunciado da questão…")" />
                     <ValidationMessage For="() => modelo.Enunciado" />
                 </div>
             </div>
@@ -59,7 +59,7 @@ else
                         <div class="alternativa-editor">
                             <button type="button" class="letra-radio @(modelo.Gabarito == alt.Letra ? "gabarito" : "")"
                                     title="Marcar @alt.Letra como correta" @onclick="() => modelo.Gabarito = alt.Letra">@alt.Letra</button>
-                            <FluentTextArea @bind-Value="alt.Texto" Rows="2" Maxlength="2000" Placeholder="@($"Texto da alternativa {alt.Letra}")" Style="width:100%" />
+                            <MarkdownEditor @bind-Value="alt.Texto" Rows="2" Maxlength="2000" Placeholder="@($"Texto da alternativa {alt.Letra}")" />
                         </div>
                     }
                 </div>

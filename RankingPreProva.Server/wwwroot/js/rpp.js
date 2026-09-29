@@ -30,6 +30,29 @@ window.rppFx = {
     }
 };
 
+window.rppMd = {
+    envolver: function (el, antes, depois, exemplo) {
+        const ini = el.selectionStart, fim = el.selectionEnd, v = el.value;
+        const sel = v.substring(ini, fim) || exemplo;
+        el.value = v.substring(0, ini) + antes + sel + depois + v.substring(fim);
+        el.focus();
+        el.setSelectionRange(ini + antes.length, ini + antes.length + sel.length);
+        return el.value;
+    },
+    prefixar: function (el, prefixo) {
+        const v = el.value;
+        const ini = v.lastIndexOf('\n', el.selectionStart - 1) + 1;
+        let fim = v.indexOf('\n', Math.max(el.selectionEnd - (el.selectionEnd > el.selectionStart ? 1 : 0), ini));
+        if (fim < 0) fim = v.length;
+        const linhas = v.substring(ini, fim).split('\n');
+        const novo = linhas.map((l, i) => (prefixo === '1. ' ? (i + 1) + '. ' : prefixo) + l).join('\n');
+        el.value = v.substring(0, ini) + novo + v.substring(fim);
+        el.focus();
+        el.setSelectionRange(ini, ini + novo.length);
+        return el.value;
+    }
+};
+
 window.rppAds = {
     config: function (posicao) {
         const ler = (nome) => document.querySelector('meta[name="' + nome + '"]')?.content || '';

@@ -4,7 +4,7 @@
 <div class="cartao questao-item animar-entrada @UiExtensions.ClasseSaldo(Questao.SaldoVotos, Questao.Status)">
     <div class="questao-corpo">
         <QuestaoMeta Questao="Questao" />
-        <p class="questao-resumo">@Questao.Enunciado</p>
+        <MarkdownView Class="questao-resumo" Texto="@Questao.Enunciado" />
         <div class="questao-rodape">
             <VotoControl Saldo="Questao.SaldoVotos" MeuVoto="Questao.MeuVoto" Desabilitado="@(Questao.AutorId == UsuarioId)" Votar="Votar" />
             <span>👥 @Questao.TotalRespostas respostas</span>

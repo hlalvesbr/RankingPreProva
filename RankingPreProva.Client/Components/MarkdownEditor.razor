@@ -1,0 +1,74 @@
+@inject IJSRuntime JS
+
+<div class="md-editor">
+    <div class="md-toolbar">
+        <button type="button" disabled="@previa" title="Negrito" @onclick='() => Envolver("**", "**", "negrito")'><b>B</b></button>
+        <button type="button" disabled="@previa" title="Itálico" @onclick='() => Envolver("*", "*", "itálico")'><i>I</i></button>
+        <button type="button" disabled="@previa" title="Tachado" @onclick='() => Envolver("~~", "~~", "tachado")'><s>S</s></button>
+        <span class="md-sep"></span>
+        <button type="button" disabled="@previa" title="Lista com marcadores" @onclick='() => Prefixar("- ")'>•&nbsp;Lista</button>
+        <button type="button" disabled="@previa" title="Lista numerada" @onclick='() => Prefixar("1. ")'>1.&nbsp;Lista</button>
+        <button type="button" disabled="@previa" title="Citação" @onclick='() => Prefixar("> ")'>❝</button>
+        <button type="button" disabled="@previa" title="Código" @onclick='() => Envolver("`", "`", "código")'>&lt;/&gt;</button>
+        <span class="md-sep"></span>
+        <button type="button" class="@(previa ? "ativo" : "")" title="Alternar pré-visualização" @onclick="() => previa = !previa">
+            @(previa ? "✏️ Editar" : "👁️ Prévia")
+        </button>
+    </div>
+    @if (previa)
+    {
+        <div class="md-previa" style="min-height:@(Rows * 1.5)em">
+            @if (string.IsNullOrWhiteSpace(Value))
+            {
+                <span class="suave pequeno">Nada para pré-visualizar.</span>
+            }
+            else
+            {
+                <MarkdownView Texto="@Value" />
+            }
+        </div>
+    }
+    else
+    {
+        <textarea @ref="area" class="md-textarea" rows="@Rows" maxlength="@Maxlength" placeholder="@Placeholder"
+                  value="@Value" @oninput="AoDigitar"></textarea>
+    }
+    <div class="md-rodape suave pequeno">
+        <span>Suporta Markdown</span>
+        @if (Maxlength > 0)
+        {
+            <span>@(Value?.Length ?? 0)/@Maxlength</span>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public int Rows { get; set; } = 5;
+    [Parameter] public int Maxlength { get; set; }
+    [Parameter] public string? Placeholder { get; set; }
+
+    private ElementReference area;
+    private bool previa;
+
+    private async Task AoDigitar(ChangeEventArgs e) => await Atualizar(e.Value?.ToString());
+
+    private async Task Atualizar(string? valor)
+    {
+        Value = valor;
+        await ValueChanged.InvokeAsync(valor);
+    }
+
+    private async Task Envolver(string antes, string depois, string exemplo)
+    {
+        var novo = await JS.InvokeAsync<string>("rppMd.envolver", area, antes, depois, exemplo);
+        await Atualizar(novo);
+    }
+
+    private async Task Prefixar(string prefixo)
+    {
+        var novo = await JS.InvokeAsync<string>("rppMd.prefixar", area, prefixo);
+        await Atualizar(novo);
+    }
+}

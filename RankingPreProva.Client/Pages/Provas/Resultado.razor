@@ -74,14 +74,14 @@ else
                     <span class="etiqueta etiqueta-erro">❌ Errou</span>
                 }
             </div>
-            <p class="questao-enunciado">@item.Enunciado</p>
+            <MarkdownView Class="questao-enunciado" Texto="@item.Enunciado" />
             <div class="alternativas @(item.Tipo == TipoQuestao.CertoErrado ? "alternativas-ce" : "")">
                 @foreach (var alt in item.Alternativas)
                 {
                     var classe = alt.Letra == item.Gabarito ? "correta" : alt.Letra == item.Marcada ? "errada" : "";
                     <div class="alternativa @classe">
                         <span class="letra">@alt.Letra</span>
-                        <span class="texto">@alt.Texto</span>
+                        <span class="texto"><MarkdownView Texto="@alt.Texto" /></span>
                     </div>
                 }
             </div>

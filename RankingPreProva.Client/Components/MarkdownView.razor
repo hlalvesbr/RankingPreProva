@@ -1,0 +1,18 @@
+@using Markdig
+
+<div class="md @Class">@((MarkupString)Html)</div>
+
+@code {
+    private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
+        .DisableHtml()
+        .UseEmphasisExtras()
+        .UsePipeTables()
+        .UseListExtras()
+        .UseSoftlineBreakAsHardlineBreak()
+        .Build();
+
+    [Parameter] public string? Texto { get; set; }
+    [Parameter] public string? Class { get; set; }
+
+    private string Html => string.IsNullOrWhiteSpace(Texto) ? string.Empty : Markdown.ToHtml(Texto, Pipeline);
+}
