@@ -11,6 +11,8 @@ else
     var u = dados.Usuario;
     var metaPct = Math.Min(100, u.MetaDiaria == 0 ? 0 : 100 * dados.RespostasHoje / u.MetaDiaria);
 
+    <div class="dashboard-layout">
+    <div class="dashboard-principal">
     <section class="boas-vindas animar-entrada">
         <div>
             <h1>@Saudacao, @PrimeiroNome(u.Nome)! @(u.SequenciaDias >= 3 ? "🔥" : "👋")</h1>
@@ -53,6 +55,12 @@ else
             </FluentButton>
         </div>
     }
+    </div>
+    <aside class="coluna-publicidade" aria-label="Publicidade">
+        <span class="rotulo-publicidade">Publicidade</span>
+        <div class="area-publicidade"></div>
+    </aside>
+    </div>
 
     <h2>O que vamos fazer hoje?</h2>
     <div class="grade-3 mb">
