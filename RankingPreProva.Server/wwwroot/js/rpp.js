@@ -27,6 +27,22 @@ window.rppFx = {
     },
     confirmarSaida: function (ativo) {
         window.onbeforeunload = ativo ? () => true : null;
+    },
+    compartilhar: async function (titulo, texto, url) {
+        if (navigator.share) {
+            try {
+                await navigator.share({ title: titulo, text: texto, url: url });
+                return 'compartilhado';
+            } catch (e) {
+                if (e && e.name === 'AbortError') return 'cancelado';
+            }
+        }
+        try {
+            await navigator.clipboard.writeText(url);
+            return 'copiado';
+        } catch (e) {
+            return 'erro';
+        }
     }
 };
 

@@ -40,6 +40,7 @@ else
             <div class="linha">
                 <VotoControl Saldo="prova.SaldoVotos" MeuVoto="prova.MeuVoto" Desabilitado="prova.EhAutor" Votar="Votar" />
                 <FavoritoToggle Favorito="prova.Favorita" AoAlternar="() => Api.FavoritarAsync(Id)" />
+                <CompartilharBotao ProvaId="Id" Titulo="@prova.Titulo" />
                 <DenunciaBotao AlvoTipo="AlvoTipo.Prova" AlvoId="Id" Desabilitado="prova.EhAutor" />
             </div>
         </div>

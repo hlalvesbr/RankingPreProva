@@ -1,0 +1,35 @@
+@inject IJSRuntime JS
+@inject IToastService Toast
+@inject NavigationManager Navigation
+
+@if (ApenasIcone)
+{
+    <FluentButton Appearance="Appearance.Stealth" Title="Compartilhar link da prova" aria-label="Compartilhar link da prova" OnClick="Compartilhar">🔗</FluentButton>
+}
+else
+{
+    <FluentButton Appearance="@Appearance" Title="Compartilhar link da prova" OnClick="Compartilhar">🔗 Compartilhar</FluentButton>
+}
+
+@code {
+    [Parameter, EditorRequired] public int ProvaId { get; set; }
+    [Parameter] public string? Titulo { get; set; }
+    [Parameter] public Appearance Appearance { get; set; } = Appearance.Neutral;
+    [Parameter] public bool ApenasIcone { get; set; }
+
+    private async Task Compartilhar()
+    {
+        var url = Navigation.ToAbsoluteUri($"/provas/{ProvaId}").ToString();
+        var titulo = Titulo ?? "Prova";
+        var resultado = await JS.InvokeAsync<string>("rppFx.compartilhar", titulo, $"Faça o simulado \"{titulo}\" no RankingPréProva!", url);
+        switch (resultado)
+        {
+            case "copiado":
+                Toast.ShowSuccess("Link copiado para a área de transferência.");
+                break;
+            case "erro":
+                Toast.ShowError($"Não foi possível compartilhar. Link: {url}");
+                break;
+        }
+    }
+}

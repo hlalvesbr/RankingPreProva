@@ -11,7 +11,8 @@
             @if (Prova.Status == StatusItem.EmRevisao) { <span class="etiqueta etiqueta-erro">Em revisão</span> }
             @if (Prova.Status == StatusItem.Arquivado) { <span class="etiqueta">Arquivada</span> }
         </div>
-        <span @onclick:preventDefault @onclick:stopPropagation>
+        <span style="display:flex; align-items:center; gap:4px; flex-wrap:nowrap; flex-shrink:0" @onclick:preventDefault @onclick:stopPropagation>
+            <CompartilharBotao ProvaId="Prova.Id" Titulo="@Prova.Titulo" ApenasIcone="true" />
             <VotoControl Saldo="Prova.SaldoVotos" MeuVoto="Prova.MeuVoto" Desabilitado="EhAutor" Votar="Votar" />
         </span>
     </div>
