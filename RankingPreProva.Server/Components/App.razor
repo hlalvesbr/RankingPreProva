@@ -1,4 +1,3 @@
-@inject IConfiguration Config
 <!DOCTYPE html>
 <html lang="pt-BR">
 
@@ -16,15 +15,8 @@
     <link rel="stylesheet" href="@Assets["RankingPreProva.Server.styles.css"]" />
     <ImportMap />
     <link rel="icon" type="image/svg+xml" href="favicon.svg" />
-    <meta name="adsense-client" content="@AdClient" />
-    <meta name="adsense-slot-lateral" content="@Config["AdSense:Slots:Lateral"]" />
-    <meta name="adsense-slot-rodape" content="@Config["AdSense:Slots:Rodape"]" />
-    <meta name="adsense-slot-conteudo" content="@Config["AdSense:Slots:Conteudo"]" />
-    @if (!string.IsNullOrWhiteSpace(AdClient))
-    {
-        <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=@AdClient" crossorigin="anonymous"></script>
-    }
     <HeadOutlet @rendermode="PageRenderMode" />
+    <script>(function (s) { s.dataset.zone = '11929405', s.src = 'https://nap5k.com/tag.min.js' })([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
 </head>
 
 <body>
@@ -47,8 +39,6 @@
 @code {
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
-
-    private string? AdClient => Config["AdSense:ClientId"];
 
     private IComponentRenderMode? PageRenderMode =>
         HttpContext.AcceptsInteractiveRouting() ? new InteractiveWebAssemblyRenderMode(prerender: false) : null;

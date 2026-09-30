@@ -44,18 +44,9 @@ Os e-mails em `Admin:Emails` recebem o papel de moderador no próximo login e pa
 dotnet user-secrets set "Admin:Emails:0" "voce@gmail.com"
 ```
 
-## Google AdSense
+## Publicidade (Monetag)
 
-Os espaços de anúncio (coluna lateral, rodapé e blocos no conteúdo) mostram um placeholder até serem configurados:
-
-```powershell
-dotnet user-secrets set "AdSense:ClientId" "ca-pub-XXXXXXXXXXXXXXXX"
-dotnet user-secrets set "AdSense:Slots:Lateral" "1234567890"
-dotnet user-secrets set "AdSense:Slots:Rodape" "1234567890"
-dotnet user-secrets set "AdSense:Slots:Conteudo" "1234567890"
-```
-
-Atualize também `RankingPreProva.Server/wwwroot/ads.txt` com o seu `pub-id`. Durante a resolução de provas, o anúncio do rodapé é ocultado para não distrair.
+Os anúncios são exibidos pela Monetag no formato In-Page Push, carregado em `RankingPreProva.Server/Components/App.razor`. O menu do usuário fica no rodapé do menu lateral para não ser encoberto pelos anúncios.
 
 ## Regras principais
 

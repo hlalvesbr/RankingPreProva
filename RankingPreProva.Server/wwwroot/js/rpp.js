@@ -1,4 +1,4 @@
-// Efeitos visuais e integração com anúncios do RankingPreProva.
+// Efeitos visuais do RankingPreProva.
 window.rppFx = {
     pronto: function () {
         const splash = document.getElementById('app-splash');
@@ -66,19 +66,5 @@ window.rppMd = {
         el.focus();
         el.setSelectionRange(ini, ini + novo.length);
         return el.value;
-    }
-};
-
-window.rppAds = {
-    config: function (posicao) {
-        const ler = (nome) => document.querySelector('meta[name="' + nome + '"]')?.content || '';
-        return { clientId: ler('adsense-client'), slot: ler('adsense-slot-' + posicao) };
-    },
-    carregar: function () {
-        try {
-            (window.adsbygoogle = window.adsbygoogle || []).push({});
-        } catch (e) {
-            console.debug('AdSense indisponível', e);
-        }
     }
 };

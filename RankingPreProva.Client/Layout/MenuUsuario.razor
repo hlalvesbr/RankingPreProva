@@ -8,6 +8,14 @@
 <details class="menu-usuario" open="@aberto">
     <summary @onclick="Alternar" @onclick:preventDefault>
         <Avatar Nome="@(Sessao.Usuario?.Nome ?? "?")" Url="@Sessao.Usuario?.AvatarUrl" Tamanho="36" />
+        <span class="menu-usuario-nome">
+            <strong>@(Sessao.Usuario?.Nome ?? "")</strong>
+            @if (Sessao.Usuario is { } usuario)
+            {
+                <small>Nível @usuario.Nivel · @Niveis.Titulo(usuario.Nivel)</small>
+            }
+        </span>
+        <span class="menu-usuario-seta" aria-hidden="true">▴</span>
     </summary>
     <div class="menu-usuario-painel" @onclick="Fechar">
         @if (Sessao.Usuario is { } u)

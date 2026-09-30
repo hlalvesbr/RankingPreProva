@@ -53,8 +53,6 @@ else
         <FluentButton OnClick="@(() => somenteErros = !somenteErros)">@(somenteErros ? "Mostrar todas" : "Mostrar só erros e brancos")</FluentButton>
     </div>
 
-    <AdSlot Posicao="conteudo" Altura="100" />
-
     <h2 class="mt">Correção</h2>
     @foreach (var item in resultado.Itens.Where(i => !somenteErros || !i.Correta))
     {

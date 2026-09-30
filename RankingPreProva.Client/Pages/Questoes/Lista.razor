@@ -37,14 +37,9 @@ else if (resultado.Items.Count == 0)
 else
 {
     <p class="suave pequeno">@resultado.Total questão(ões) encontrada(s)</p>
-    @for (var i = 0; i < resultado.Items.Count; i++)
+    @foreach (var q in resultado.Items)
     {
-        var q = resultado.Items[i];
         <QuestaoItem Questao="q" UsuarioId="usuarioId" @key="q.Id" />
-        @if (i == 4)
-        {
-            <div class="mt mb"><AdSlot Posicao="conteudo" Altura="100" /></div>
-        }
     }
     <Paginacao Pagina="resultado.Page" TotalPaginas="resultado.TotalPages" PaginaChanged="IrPara" />
 }
