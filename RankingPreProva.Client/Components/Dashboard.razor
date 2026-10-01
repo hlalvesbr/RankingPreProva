@@ -14,7 +14,10 @@ else
     <div class="dashboard-layout">
     <div class="dashboard-principal">
     <section class="boas-vindas animar-entrada">
-        <div>
+        <div class="meta-anel" style="--p:@metaPct" title="Meta diária">
+            <div><strong>@dados.RespostasHoje</strong><span>de @u.MetaDiaria</span></div>
+        </div>
+        <div style="flex:1">
             <h1>@Saudacao, @PrimeiroNome(u.Nome)! @(u.SequenciaDias >= 3 ? "🔥" : "👋")</h1>
             <p>
                 @if (u.SequenciaDias > 0)
@@ -33,9 +36,6 @@ else
                     <text> · @pos º no ranking da semana</text>
                 }
             </p>
-        </div>
-        <div class="meta-anel" style="--p:@metaPct" title="Meta diária">
-            <div><strong>@dados.RespostasHoje</strong><span>de @u.MetaDiaria</span></div>
         </div>
     </section>
 
@@ -56,10 +56,6 @@ else
         </div>
     }
     </div>
-    <aside class="coluna-publicidade" aria-label="Publicidade">
-        <span class="rotulo-publicidade">Publicidade</span>
-        <div class="area-publicidade"></div>
-    </aside>
     </div>
 
     <h2>O que vamos fazer hoje?</h2>

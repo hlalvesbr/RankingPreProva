@@ -12,10 +12,10 @@
     <div>
         <h1>@Titulo</h1>
         <p>@(Minhas ? "Questões que você cadastrou. Só você pode editá-las." : "Banco global de questões da comunidade.")</p>
-    </div>
-    <div class="linha">
-        <FluentButton OnClick="@(() => Navigation.NavigateTo("/praticar"))">⚡ Modo prática</FluentButton>
-        <FluentButton Appearance="Appearance.Accent" OnClick="@(() => Navigation.NavigateTo("/questoes/nova"))">+ Nova questão</FluentButton>
+        <div class="linha" style="justify-content: flex-start; padding-top: 20px;">
+            <FluentButton OnClick="@(() => Navigation.NavigateTo("/praticar"))">⚡ Modo prática</FluentButton>
+            <FluentButton Appearance="Appearance.Accent" OnClick="@(() => Navigation.NavigateTo("/questoes/nova"))">+ Nova questão</FluentButton>
+        </div>
     </div>
 </div>
 
