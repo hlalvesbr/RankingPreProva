@@ -13,7 +13,7 @@
 else
 {
     <div class="cartao mb">
-        <div class="perfil-topo">
+        <div class="perfil-topo" style="padding-bottom: 10px">
             <Avatar Nome="@usuario.Nome" Url="@usuario.AvatarUrl" Tamanho="84" />
             <div style="flex:1">
                 <h1>@usuario.Nome</h1>
@@ -24,8 +24,8 @@ else
                     @if (usuario.EhAdmin) { <span class="etiqueta etiqueta-ia">🛡️ Moderador</span> }
                 </div>
             </div>
-            <a href="/perfil/@(usuario.Apelido ?? usuario.Id.ToString())">Ver perfil público →</a>
         </div>
+        <a href="/perfil/@(usuario.Apelido ?? usuario.Id.ToString())">Ver perfil público →</a>
         <div class="grade-4 mt">
             <div class="estatistica"><strong>@usuario.Xp</strong><span>XP total</span></div>
             <div class="estatistica"><strong>@usuario.TotalRespostas</strong><span>respostas</span></div>

@@ -6,7 +6,7 @@
 
 <PageTitle>Modo prática · RankingPréProva</PageTitle>
 
-<div class="cabecalho-pagina">
+<div class="cabecalho-pagina" style="flex-direction:column; align-items:flex-start">
     <div>
         <h1>⚡ Modo prática</h1>
         <p>Questões sorteadas conforme seus filtros. Responda, aprenda com a explicação e siga para a próxima.</p>
@@ -41,7 +41,7 @@ else
 {
     <div class="linha-entre mb">
         <FluentButton OnClick="() => iniciado = false">⚙️ Filtros</FluentButton>
-        <div class="linha">
+        <div class="linha" style="align-content: flex-start">
             <FavoritoToggle Favorito="questao.Favorita" AoAlternar="() => Api.FavoritarAsync(questao.Id)" />
             <DenunciaBotao AlvoTipo="AlvoTipo.Questao" AlvoId="questao.Id" Desabilitado="questao.EhAutor" />
             <a href="/questoes/@questao.Id" class="pequeno">Abrir questão</a>
