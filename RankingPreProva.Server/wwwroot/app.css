@@ -104,7 +104,7 @@ h1:focus { outline: none; }
 .xp-preenchido { display: block; height: 100%; background: linear-gradient(90deg, var(--rpp-primaria), #3fa3a8); border-radius: 8px; transition: width .8s cubic-bezier(.2,.8,.2,1); }
 .xp-valor { grid-area: valor; color: var(--rpp-texto-suave); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-background: #fff; margin-right: 8px; flex-shrink: 0; }
+.google-g { display: inline-flex; width: 20px; height: 20px; align-items: center; justify-content: center; border-radius: 50%; background: #fff; margin-right: 8px; flex-shrink: 0; }
 
 .menu-usuario { position: relative; z-index: 1001; }
 .menu-usuario-fundo { position: fixed; inset: 0; z-index: 1000; background: transparent; }
