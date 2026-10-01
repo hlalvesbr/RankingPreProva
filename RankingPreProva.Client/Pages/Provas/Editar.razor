@@ -128,7 +128,7 @@ else
                             <td style="width:36px"><strong>@(indice + 1)</strong></td>
                             <td>
                                 <div class="pequeno suave">#@item.QuestaoId · @item.Tipo.Nome() @(item.Banca is null ? "" : $"· {item.Banca}") @(item.Ano is null ? "" : $"· {item.Ano}")</div>
-                                @TextoUtil.Resumo(item.Enunciado, 160)
+                                <MarkdownView Class="questao-resumo" Texto="@item.Enunciado" />
                             </td>
                             @if (modelo.Regra == RegraPontuacao.PesoPersonalizado)
                             {
@@ -190,7 +190,7 @@ else
                             <div class="linha-entre @UiExtensions.ClasseSaldo(q.SaldoVotos)" style="padding:10px 0; border-bottom:1px solid var(--rpp-borda)">
                                 <div style="flex:1; min-width:0">
                                     <div class="pequeno suave">#@q.Id · @q.Tipo.Nome() @(q.Banca is null ? "" : $"· {q.Banca}") · 👍 @q.SaldoVotos · @string.Join(", ", q.Assuntos)</div>
-                                    @TextoUtil.Resumo(q.Enunciado, 180)
+                                    <MarkdownView Class="questao-resumo" Texto="@q.Enunciado" />
                                 </div>
                                 <FluentButton Appearance="@(jaAdicionada ? Appearance.Neutral : Appearance.Accent)" Disabled="jaAdicionada" OnClick="() => Adicionar(q)">
                                     @(jaAdicionada ? "✔ Adicionada" : "+ Adicionar")
