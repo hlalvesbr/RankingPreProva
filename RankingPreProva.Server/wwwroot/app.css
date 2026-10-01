@@ -484,7 +484,8 @@ right: 40px; top: -10px;
 
 /* ---------- Celebrações ---------- */
 .xp-bolha {
-    position: fixed; top: 70px; right: 220px; z-index: 200;
+    position: fixed; z-index: 200;
+    bottom: 110px; left: calc(max(0px, (100% - 1560px) / 2) + 24px + 90px);
     background: var(--rpp-ouro); color: #3b2a00; font-weight: 800;
     padding: 6px 14px; border-radius: 20px; box-shadow: 0 6px 18px rgba(217,164,37,.4);
     animation: xp-pop 1.8s ease forwards; pointer-events: none;
