@@ -20,7 +20,7 @@
 </head>
 
 <body>
-    @if (PageRenderMode is not null)
+    @if (PageRenderMode is not null && !Prerenderizar)
     {
         <div id="app-splash">
             <div class="splash-logo">📚</div>
@@ -40,6 +40,16 @@
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = default!;
 
+    // Páginas públicas indexáveis por buscadores: pré-renderizadas no servidor para visitantes anônimos.
+    private static readonly HashSet<string> RotasPublicas = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "/", "/sobre", "/privacidade", "/termos", "/not-found"
+    };
+
+    private bool Prerenderizar =>
+        HttpContext.User.Identity?.IsAuthenticated != true &&
+        RotasPublicas.Contains(HttpContext.Request.Path.Value?.TrimEnd('/') is { Length: > 0 } p ? p : "/");
+
     private IComponentRenderMode? PageRenderMode =>
-        HttpContext.AcceptsInteractiveRouting() ? new InteractiveWebAssemblyRenderMode(prerender: false) : null;
+        HttpContext.AcceptsInteractiveRouting() ? new InteractiveWebAssemblyRenderMode(prerender: Prerenderizar) : null;
 }
