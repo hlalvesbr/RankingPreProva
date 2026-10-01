@@ -39,9 +39,9 @@ else if (questao is null)
 }
 else
 {
-    <div class="linha-entre mb">
+    <div class="linha mb">
         <FluentButton OnClick="() => iniciado = false">⚙️ Filtros</FluentButton>
-        <div class="linha" style="align-content: flex-start">
+        <div class="linha">
             <FavoritoToggle Favorito="questao.Favorita" AoAlternar="() => Api.FavoritarAsync(questao.Id)" />
             <DenunciaBotao AlvoTipo="AlvoTipo.Questao" AlvoId="questao.Id" Desabilitado="questao.EhAutor" />
             <a href="/questoes/@questao.Id" class="pequeno">Abrir questão</a>
