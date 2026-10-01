@@ -1,4 +1,4 @@
-@page "/provas/nova"
+﻿@page "/provas/nova"
 @page "/provas/{Id:int}/editar"
 @attribute [Authorize]
 @inject ProvasApi Api
@@ -29,7 +29,8 @@ else
         </FluentMessageBar>
     }
 
-    <EditForm Model="modelo" OnValidSubmit="Salvar" id="form-prova">
+    <div style="display:flex; flex-direction:column">
+    <EditForm Model="modelo" OnValidSubmit="Salvar" id="form-prova" style="display:contents">
         <DataAnnotationsValidator />
         <ValidationSummary />
 
@@ -145,6 +146,13 @@ else
                 </tbody>
             </table>
         </div>
+
+        <div class="linha mt" style="justify-content:flex-end; order:1">
+            <FluentButton Type="ButtonType.Button" OnClick="@(() => Navigation.NavigateTo(Id is null ? "/provas" : $"/provas/{Id}"))">Cancelar</FluentButton>
+            <FluentButton Type="ButtonType.Submit" Appearance="Appearance.Accent" Loading="salvando">
+                @(Id is null ? "Publicar prova (+15 XP)" : "Salvar alterações")
+            </FluentButton>
+        </div>
     </EditForm>
 
         @if (!congelada)
@@ -194,13 +202,7 @@ else
                 }
             </div>
         }
-
-        <div class="linha mt" style="justify-content:flex-end">
-            <FluentButton OnClick="@(() => Navigation.NavigateTo(Id is null ? "/provas" : $"/provas/{Id}"))">Cancelar</FluentButton>
-            <FluentButton Type="ButtonType.Submit" FormId="form-prova" Appearance="Appearance.Accent" Loading="salvando">
-                @(Id is null ? "Publicar prova (+15 XP)" : "Salvar alterações")
-            </FluentButton>
-        </div>
+    </div>
 }
 
 @code {

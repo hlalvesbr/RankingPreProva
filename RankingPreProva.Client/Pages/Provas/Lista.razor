@@ -12,8 +12,10 @@
     <div>
         <h1>@Titulo</h1>
         <p>@(Minhas ? "Provas que você montou. Acompanhe o ranking de cada uma." : "Simulados criados pela comunidade. Só a primeira tentativa vale para o ranking!")</p>
+        <div class="linha" style="justify-content: flex-start; padding-top: 15px;">
+            <FluentButton Appearance="Appearance.Accent" OnClick="@(() => Navigation.NavigateTo("/provas/nova"))">+ Nova prova</FluentButton>
+        </div>
     </div>
-    <FluentButton Appearance="Appearance.Accent" OnClick="@(() => Navigation.NavigateTo("/provas/nova"))">+ Nova prova</FluentButton>
 </div>
 
 <div class="cartao mb">
