@@ -87,14 +87,14 @@ else
                 {
                     <div class="campo">
                         <label>Pontos por acerto</label>
-                        <FluentNumberField @bind-Value="modelo.PontosAcerto" Min="0.01" Max="100" Step="0.5" Disabled="congelada" />
+                        <InputNumber @bind-Value="modelo.PontosAcerto" min="0.01" max="100" step="any" disabled="@congelada" />
                     </div>
                 }
                 @if (modelo.Regra == RegraPontuacao.CespeAnulacao)
                 {
                     <div class="campo">
                         <label>Desconto por erro</label>
-                        <FluentNumberField @bind-Value="modelo.PenalidadeErro" Min="0" Max="100" Step="0.5" Disabled="congelada" />
+                        <InputNumber @bind-Value="modelo.PenalidadeErro" min="0" max="100" step="any" disabled="@congelada" />
                     </div>
                     <div class="campo" style="justify-content:flex-end">
                         <FluentCheckbox @bind-Value="modelo.NotaMinimaZero" Label="Nota mínima é zero" Disabled="congelada" />
@@ -133,7 +133,7 @@ else
                             @if (modelo.Regra == RegraPontuacao.PesoPersonalizado)
                             {
                                 <td style="width:110px">
-                                    <FluentNumberField @bind-Value="item.Peso" Min="0.1" Max="100" Step="0.5" Disabled="congelada" Style="width:100px" />
+                                    <InputNumber @bind-Value="item.Peso" min="0.01" max="100" step="any" disabled="@congelada" style="width:100px" />
                                 </td>
                             }
                             <td style="width:130px; white-space:nowrap">
