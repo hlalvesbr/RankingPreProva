@@ -6,6 +6,13 @@
 
 <PageTitle>@(prova?.Titulo ?? "Prova") · RankingPréProva</PageTitle>
 
+<div class="cabecalho-pagina">
+    <div>
+        <h1>@($"✏️ Prova #{Id}")</h1>
+        <p>Aproveite para compartilhar essa prova com seu grupo.</p>
+    </div>
+</div>
+
 @if (erro is not null)
 {
     <div class="estado-vazio">

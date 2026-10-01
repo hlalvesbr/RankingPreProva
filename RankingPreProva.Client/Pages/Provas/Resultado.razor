@@ -22,12 +22,15 @@ else
 {
     var pct = resultado.Percentual;
 
-    <div class="boas-vindas animar-entrada">
+    <div class="boas-vindas animar-entrada" style="justify-content:flex-start">
+        <div class="meta-anel" style="--p:@((int)pct)">
+            <div><strong>@((int)pct)%</strong><span>aproveit.</span></div>
+        </div>
         <div>
             <a href="/provas/@Id" class="pequeno" style="color:#fff">← @resultado.ProvaTitulo</a>
             <h1>@Mensagem(pct)</h1>
             <p>
-                Nota <strong>@UiExtensions.Nota(resultado.Nota)</strong> de @UiExtensions.Nota(resultado.NotaMaxima)
+                Nota
                 · @resultado.Acertos acertos · @resultado.Erros erros · @resultado.EmBranco em branco
                 · ⏱️ @TextoUtil.Duracao(resultado.DuracaoSeg)
             </p>
@@ -41,9 +44,6 @@ else
                     <text>🔁 Tentativa de treino: não altera o ranking.</text>
                 }
             </p>
-        </div>
-        <div class="meta-anel" style="--p:@((int)pct)">
-            <div><strong>@((int)pct)%</strong><span>aproveit.</span></div>
         </div>
     </div>
 
