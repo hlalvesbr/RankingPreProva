@@ -207,3 +207,13 @@ public class XpEvento
     public string Motivo { get; set; } = string.Empty;
     public DateTime Data { get; set; } = DateTime.UtcNow;
 }
+
+public class Imagem
+{
+    public Guid Id { get; set; }
+    public int AutorId { get; set; }
+    public string ContentType { get; set; } = string.Empty;
+    public int Tamanho { get; set; }
+    public byte[] Bytes { get; set; } = [];
+    public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
+}

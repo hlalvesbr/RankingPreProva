@@ -1,6 +1,9 @@
+@implements IAsyncDisposable
 @inject IJSRuntime JS
+@inject ImagensApi Imagens
+@inject IToastService Toast
 
-<div class="md-editor">
+<div class="md-editor" @ref="container">
     <div class="md-toolbar">
         <button type="button" disabled="@previa" title="Negrito" @onclick='() => Envolver("**", "**", "negrito")'><b>B</b></button>
         <button type="button" disabled="@previa" title="Itálico" @onclick='() => Envolver("*", "*", "itálico")'><i>I</i></button>
@@ -10,6 +13,10 @@
         <button type="button" disabled="@previa" title="Lista numerada" @onclick='() => Prefixar("1. ")'>1.&nbsp;Lista</button>
         <button type="button" disabled="@previa" title="Citação" @onclick='() => Prefixar("> ")'>❝</button>
         <button type="button" disabled="@previa" title="Código" @onclick='() => Envolver("`", "`", "código")'>&lt;/&gt;</button>
+        @if (PermitirImagens)
+        {
+            <button type="button" disabled="@(previa || enviando > 0)" title="Inserir imagem (PNG, JPG, GIF ou WebP até 1 MB). Também dá para colar ou arrastar." @onclick="EscolherImagem">🖼️</button>
+        }
         <span class="md-sep"></span>
         <button type="button" class="@(previa ? "ativo" : "")" title="Alternar pré-visualização" @onclick="() => previa = !previa">
             @(previa ? "✏️ Editar" : "👁️ Prévia")
@@ -34,7 +41,7 @@
                   value="@Value" @oninput="AoDigitar"></textarea>
     }
     <div class="md-rodape suave pequeno">
-        <span>Suporta Markdown</span>
+        <span>@(enviando > 0 ? "⏳ Enviando imagem…" : PermitirImagens ? "Suporta Markdown · cole ou arraste imagens" : "Suporta Markdown")</span>
         @if (Maxlength > 0)
         {
             <span>@(Value?.Length ?? 0)/@Maxlength</span>
@@ -48,9 +55,77 @@
     [Parameter] public int Rows { get; set; } = 5;
     [Parameter] public int Maxlength { get; set; }
     [Parameter] public string? Placeholder { get; set; }
+    [Parameter] public bool PermitirImagens { get; set; } = true;
 
     private ElementReference area;
+    private ElementReference container;
     private bool previa;
+    private int enviando;
+    private DotNetObjectReference<MarkdownEditor>? dotnet;
+    private IJSObjectReference? registro;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && PermitirImagens)
+        {
+            dotnet = DotNetObjectReference.Create(this);
+            registro = await JS.InvokeAsync<IJSObjectReference>("rppMd.registrarImagens", container, dotnet);
+        }
+    }
+
+    private async Task EscolherImagem()
+    {
+        if (registro is not null)
+            await registro.InvokeVoidAsync("escolher");
+    }
+
+    [JSInvokable]
+    public Task ImagemRejeitada(string mensagem)
+    {
+        Toast.ShowError(mensagem);
+        return Task.CompletedTask;
+    }
+
+    [JSInvokable]
+    public async Task ReceberImagem(byte[] bytes, string contentType)
+    {
+        enviando++;
+        StateHasChanged();
+        try
+        {
+            var img = await Imagens.EnviarAsync(bytes, contentType);
+            var markdown = $"![imagem]({img.Url})";
+            if (previa)
+                await Atualizar(string.IsNullOrEmpty(Value) ? markdown : $"{Value}\n{markdown}");
+            else
+                await Atualizar(await JS.InvokeAsync<string>("rppMd.inserir", area, markdown));
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError(ex is ApiException ? ex.Message : "Não foi possível enviar a imagem.");
+        }
+        finally
+        {
+            enviando--;
+            StateHasChanged();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        try
+        {
+            if (registro is not null)
+            {
+                await registro.InvokeVoidAsync("dispose");
+                await registro.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        dotnet?.Dispose();
+    }
 
     private async Task AoDigitar(ChangeEventArgs e) => await Atualizar(e.Value?.ToString());
 

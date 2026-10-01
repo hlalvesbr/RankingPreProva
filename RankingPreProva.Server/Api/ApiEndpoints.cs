@@ -25,6 +25,22 @@ public static class ApiEndpoints
 
         var auth = api.MapGroup("").RequireAuthorization();
 
+        // Imagens (corpo bruto com o arquivo; GET público com cache imutável)
+        api.MapGet("/imagens/{id:guid}", async (Guid id, ImagemService s, HttpContext ctx) =>
+        {
+            var img = await s.ObterAsync(id);
+            if (img is null) return Results.NotFound();
+            ctx.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+            ctx.Response.Headers.XContentTypeOptions = "nosniff";
+            return Results.File(img.Bytes, img.ContentType);
+        });
+        auth.MapPost("/imagens", (ClaimsPrincipal u, ImagemService s, HttpRequest req) =>
+        {
+            if (req.ContentLength > ImagemService.TamanhoMaximo)
+                throw new RegraNegocioException("A imagem deve ter no máximo 1 MB.");
+            return s.SalvarAsync(req.Body, u.UsuarioId());
+        }).WithMetadata(new Microsoft.AspNetCore.Mvc.RequestSizeLimitAttribute(ImagemService.TamanhoMaximo + 64 * 1024));
+
         // Usuário
         auth.MapGet("/usuarios/me", (ClaimsPrincipal u, UsuarioService s) => s.ObterAsync(u.UsuarioId()));
         auth.MapPut("/usuarios/me", async (ClaimsPrincipal u, UsuarioService s, PerfilEdicaoDto dto) =>

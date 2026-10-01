@@ -41,7 +41,7 @@ else
         {
             <details class="mt" open="@(!resultado.Correta)">
                 <summary class="negrito">📖 Explicação</summary>
-                <p class="explicacao">@resultado.Explicacao</p>
+                <MarkdownView Texto="@resultado.Explicacao" Class="explicacao" />
             </details>
         }
     </div>

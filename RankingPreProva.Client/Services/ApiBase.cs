@@ -38,6 +38,13 @@ public abstract class ApiBase(HttpClient http)
         await GarantirSucessoAsync(resp);
     }
 
+    protected async Task<T> PostConteudoAsync<T>(string url, HttpContent conteudo)
+    {
+        using var resp = await Http.PostAsync(url, conteudo);
+        await GarantirSucessoAsync(resp);
+        return (await resp.Content.ReadFromJsonAsync<T>())!;
+    }
+
     protected async Task PutAsync(string url, object corpo)
     {
         using var resp = await Http.PutAsJsonAsync(url, corpo);

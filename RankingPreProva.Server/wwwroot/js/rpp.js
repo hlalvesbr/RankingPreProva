@@ -66,5 +66,76 @@ window.rppMd = {
         el.focus();
         el.setSelectionRange(ini, ini + novo.length);
         return el.value;
+    },
+    inserir: function (el, texto) {
+        const ini = el.selectionStart, fim = el.selectionEnd, v = el.value;
+        const antes = ini > 0 && v[ini - 1] !== '\n' ? '\n' : '';
+        const depois = fim < v.length && v[fim] !== '\n' ? '\n' : '';
+        const bloco = antes + texto + depois;
+        el.value = v.substring(0, ini) + bloco + v.substring(fim);
+        el.focus();
+        el.setSelectionRange(ini + bloco.length, ini + bloco.length);
+        return el.value;
+    },
+    registrarImagens: function (container, dotnet) {
+        const tipos = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
+        const enviar = async (arquivos) => {
+            for (const f of arquivos) {
+                if (!f.type.startsWith('image/')) continue;
+                if (!tipos.includes(f.type)) { await dotnet.invokeMethodAsync('ImagemRejeitada', 'Formato não suportado. Use PNG, JPG, GIF ou WebP.'); continue; }
+                if (f.size > 1024 * 1024) { await dotnet.invokeMethodAsync('ImagemRejeitada', 'A imagem deve ter no máximo 1 MB.'); continue; }
+                const bytes = new Uint8Array(await f.arrayBuffer());
+                await dotnet.invokeMethodAsync('ReceberImagem', bytes, f.type);
+            }
+        };
+        const imagensDe = (lista) => Array.from(lista || []).filter(f => f.type.startsWith('image/'));
+        const aoColar = (e) => {
+            if (e.target.tagName !== 'TEXTAREA') return;
+            const arquivos = imagensDe(e.clipboardData && e.clipboardData.files);
+            if (!arquivos.length) return;
+            e.preventDefault();
+            enviar(arquivos);
+        };
+        const aoArrastarSobre = (e) => {
+            if (e.dataTransfer && Array.from(e.dataTransfer.types).includes('Files')) {
+                e.preventDefault();
+                container.classList.add('arrastando');
+            }
+        };
+        const aoSair = () => container.classList.remove('arrastando');
+        const aoSoltar = (e) => {
+            container.classList.remove('arrastando');
+            const arquivos = imagensDe(e.dataTransfer && e.dataTransfer.files);
+            if (!arquivos.length) return;
+            e.preventDefault();
+            const ta = container.querySelector('textarea');
+            if (ta && e.target === ta && document.caretPositionFromPoint) {
+                const p = document.caretPositionFromPoint(e.clientX, e.clientY);
+                if (p && p.offsetNode === ta) ta.setSelectionRange(p.offset, p.offset);
+            }
+            enviar(arquivos);
+        };
+        const seletor = document.createElement('input');
+        seletor.type = 'file';
+        seletor.accept = tipos.join(',');
+        seletor.multiple = true;
+        seletor.style.display = 'none';
+        seletor.addEventListener('change', () => { enviar(Array.from(seletor.files)); seletor.value = ''; });
+        container.appendChild(seletor);
+
+        container.addEventListener('paste', aoColar);
+        container.addEventListener('dragover', aoArrastarSobre);
+        container.addEventListener('dragleave', aoSair);
+        container.addEventListener('drop', aoSoltar);
+        return {
+            escolher: () => seletor.click(),
+            dispose: () => {
+                container.removeEventListener('paste', aoColar);
+                container.removeEventListener('dragover', aoArrastarSobre);
+                container.removeEventListener('dragleave', aoSair);
+                container.removeEventListener('drop', aoSoltar);
+                seletor.remove();
+            }
+        };
     }
 };

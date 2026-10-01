@@ -86,8 +86,8 @@ else
             <ValidationMessage For="() => modelo.Gabarito" />
             <div class="campo mt">
                 <label>Explicação / comentário do gabarito</label>
-                <FluentTextArea @bind-Value="modelo.Explicacao" Rows="4" Maxlength="8000" Resize="TextAreaResize.Vertical"
-                                Placeholder="Explique por que a resposta está correta. Cite a lei, a súmula ou a doutrina." Style="width:100%" />
+                <MarkdownEditor @bind-Value="modelo.Explicacao" Rows="4" Maxlength="8000"
+                                Placeholder="Explique por que a resposta está correta. Cite a lei, a súmula ou a doutrina." />
             </div>
         </div>
 

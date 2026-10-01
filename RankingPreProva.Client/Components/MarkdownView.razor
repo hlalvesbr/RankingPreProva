@@ -1,4 +1,6 @@
 @using Markdig
+@using Markdig.Syntax
+@using Markdig.Renderers.Html
 
 <div class="md @Class">@((MarkupString)Html)</div>
 
@@ -14,5 +16,23 @@
     [Parameter] public string? Texto { get; set; }
     [Parameter] public string? Class { get; set; }
 
-    private string Html => string.IsNullOrWhiteSpace(Texto) ? string.Empty : Markdown.ToHtml(Texto, Pipeline);
+    private string Html => string.IsNullOrWhiteSpace(Texto) ? string.Empty : Renderizar(Texto);
+
+    private static string Renderizar(string texto)
+    {
+        var doc = Markdown.Parse(texto, Pipeline);
+        foreach (var img in doc.Descendants<Markdig.Syntax.Inlines.LinkInline>().Where(l => l.IsImage).ToList())
+        {
+            if (img.Url is not null && img.Url.StartsWith("/api/imagens/", StringComparison.Ordinal))
+            {
+                img.GetAttributes().AddPropertyIfNotExist("loading", "lazy");
+            }
+            else
+            {
+                var alt = string.Concat(img.Descendants<Markdig.Syntax.Inlines.LiteralInline>().Select(l => l.Content.ToString()));
+                img.ReplaceBy(new Markdig.Syntax.Inlines.LiteralInline(string.IsNullOrEmpty(alt) ? "[imagem]" : $"[{alt}]"));
+            }
+        }
+        return doc.ToHtml(Pipeline);
+    }
 }

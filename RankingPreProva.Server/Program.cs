@@ -35,6 +35,7 @@ namespace RankingPreProva.Server
 			builder.Services.AddScoped<RankingService>();
 			builder.Services.AddScoped<VotoService>();
 			builder.Services.AddScoped<DenunciaService>();
+			builder.Services.AddScoped<ImagemService>();
 
 			var app = builder.Build();
 

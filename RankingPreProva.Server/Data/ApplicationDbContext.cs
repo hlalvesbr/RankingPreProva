@@ -25,6 +25,7 @@ namespace RankingPreProva.Server.Data
         public DbSet<Badge> Badges => Set<Badge>();
         public DbSet<UsuarioBadge> UsuarioBadges => Set<UsuarioBadge>();
         public DbSet<XpEvento> XpEventos => Set<XpEvento>();
+        public DbSet<Imagem> Imagens => Set<Imagem>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -43,6 +44,14 @@ namespace RankingPreProva.Server.Data
                 e.Property(u => u.Bio).HasMaxLength(500);
                 e.Property(u => u.CargoAlvo).HasMaxLength(200);
                 e.Property(u => u.ConcursoAlvo).HasMaxLength(200);
+            });
+
+            modelBuilder.Entity<Imagem>(e =>
+            {
+                e.Property(i => i.ContentType).HasMaxLength(50).IsRequired();
+                e.Property(i => i.Bytes).IsRequired();
+                e.HasIndex(i => i.AutorId);
+                e.HasOne<Usuario>().WithMany().HasForeignKey(i => i.AutorId).OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<Assunto>(e =>

@@ -46,6 +46,16 @@ public class UsuariosApi(HttpClient http) : ApiBase(http)
     public Task<List<RankingGeralItemDto>> RankingGeralAsync(string periodo) => GetAsync<List<RankingGeralItemDto>>($"api/ranking-geral?periodo={periodo}");
 }
 
+public class ImagensApi(HttpClient http) : ApiBase(http)
+{
+    public Task<ImagemEnviadaDto> EnviarAsync(byte[] bytes, string contentType)
+    {
+        var conteudo = new ByteArrayContent(bytes);
+        conteudo.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+        return PostConteudoAsync<ImagemEnviadaDto>("api/imagens", conteudo);
+    }
+}
+
 public class ModeracaoApi(HttpClient http) : ApiBase(http)
 {
     public Task DenunciarAsync(DenunciaCriarDto dto) => PostSemRetornoAsync("api/denuncias", dto);

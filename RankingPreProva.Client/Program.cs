@@ -17,6 +17,7 @@ namespace RankingPreProva.Client
 
             builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
             builder.Services.AddScoped<QuestoesApi>();
+            builder.Services.AddScoped<ImagensApi>();
             builder.Services.AddScoped<ProvasApi>();
             builder.Services.AddScoped<UsuariosApi>();
             builder.Services.AddScoped<ModeracaoApi>();
