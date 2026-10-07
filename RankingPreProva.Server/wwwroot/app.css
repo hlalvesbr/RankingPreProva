@@ -138,16 +138,20 @@ h1:focus { outline: none; }
     display: grid;
     grid-template-columns: 250px minmax(0, 1fr);
     gap: 24px;
-    max-width: 1560px; width: 100%;
+    width: 100%;
     margin: 0 auto;
     padding: 24px;
     box-sizing: border-box;
 }
 
 .app-nav {
-    position: sticky; top: calc(var(--header-altura) + 24px); align-self: start;
+    position: sticky; top: var(--header-altura); align-self: start;
     display: flex; flex-direction: column;
-    height: calc(100vh - var(--header-altura) - 48px);
+    margin: -24px 0;
+    padding: 12px 0;
+    box-sizing: border-box;
+    height: calc(100vh - var(--header-altura));
+    height: calc(100dvh - var(--header-altura));
 }
 .nav-rolagem {
     flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden;
@@ -556,7 +560,7 @@ h1:focus { outline: none; }
     .app-body { grid-template-columns: minmax(0, 1fr); gap: 0; padding: 12px; }
     .app-nav {
         position: fixed; top: var(--header-altura); left: 0; bottom: 0; z-index: 60;
-        width: min(85vw, 300px); height: auto;
+        width: min(85vw, 300px); height: auto; margin: 0;
         padding: 12px; box-sizing: border-box;
         background: var(--rpp-superficie); border-right: 1px solid var(--rpp-borda);
         box-shadow: 4px 0 24px rgba(31, 42, 48, .15);
