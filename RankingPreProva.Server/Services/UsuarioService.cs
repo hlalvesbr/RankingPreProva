@@ -260,19 +260,24 @@ public class UsuarioService(ApplicationDbContext db, IConfiguration config, Gami
         if (periodo == "semana")
         {
             var desde = DateTime.UtcNow.AddDays(-7);
-            pontuacao = (await db.XpEventos.AsNoTracking()
-                    .Where(x => x.Data >= desde)
-                    .GroupBy(x => x.UsuarioId)
-                    .Select(g => new { UsuarioId = g.Key, Xp = g.Sum(x => x.Quantidade) })
+            pontuacao = (await db.Usuarios.AsNoTracking()
+                    .Select(u => new
+                    {
+                        UsuarioId = u.Id,
+                        Xp = db.XpEventos
+                            .Where(x => x.UsuarioId == u.Id && x.Data >= desde)
+                            .Sum(x => (int?)x.Quantidade) ?? 0
+                    })
                     .OrderByDescending(x => x.Xp)
+                    .ThenBy(x => x.UsuarioId)
                     .ToListAsync())
                 .Select(x => (x.UsuarioId, x.Xp)).ToList();
         }
         else
         {
             pontuacao = (await db.Usuarios.AsNoTracking()
-                    .Where(u => u.Xp > 0)
                     .OrderByDescending(u => u.Xp)
+                    .ThenBy(u => u.Id)
                     .Select(u => new { u.Id, u.Xp })
                     .ToListAsync())
                 .Select(x => (x.Id, x.Xp)).ToList();
