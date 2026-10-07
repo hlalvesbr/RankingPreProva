@@ -2,6 +2,8 @@
 
 Plataforma gamificada de preparação para concursos públicos: banco global de questões, provas criadas pela comunidade, rankings, XP, níveis, sequência de estudos e conquistas.
 
+Site: https://www.rankingpreprova.com
+
 ## Stack
 
 - **.NET 10** · Blazor Web App com renderização **Interactive WebAssembly** global (sem prerender)
@@ -43,10 +45,6 @@ Os e-mails em `Admin:Emails` recebem o papel de moderador no próximo login e pa
 ```powershell
 dotnet user-secrets set "Admin:Emails:0" "voce@gmail.com"
 ```
-
-## Publicidade (Monetag)
-
-Os anúncios são exibidos pela Monetag no formato In-Page Push, carregado em `RankingPreProva.Server/Components/App.razor`. O menu do usuário fica no rodapé do menu lateral para não ser encoberto pelos anúncios.
 
 ## Regras principais
 
