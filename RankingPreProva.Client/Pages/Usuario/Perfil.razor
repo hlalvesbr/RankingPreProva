@@ -14,7 +14,13 @@ else
 {
     <div class="cartao mb">
         <div class="perfil-topo" style="padding-bottom: 10px">
-            <Avatar Nome="@usuario.Nome" Url="@usuario.AvatarUrl" Tamanho="84" />
+            <div style="display:flex; flex-direction:column; align-items:center; gap:6px">
+                <Avatar Nome="@usuario.Nome" Url="@usuario.AvatarUrl" Tamanho="84" />
+                <label class="suave" style="cursor:pointer; font-size:0.85em">
+                    @(enviandoFoto ? "Enviando…" : "📷 Alterar foto")
+                    <InputFile OnChange="AlterarFoto" accept="image/png,image/jpeg,image/gif,image/webp" disabled="@enviandoFoto" style="display:none" />
+                </label>
+            </div>
             <div style="flex:1">
                 <h1>@usuario.Nome</h1>
                 <div class="suave">@usuario.Email · membro desde @UiExtensions.DataCurta(usuario.CriadoEm)</div>
@@ -75,7 +81,7 @@ else
 
     <div class="cartao">
         <h2>Conta</h2>
-        <p class="suave">Você entra com sua conta Google (<strong>@usuario.Email</strong>). A foto de perfil é sincronizada a cada login.</p>
+        <p class="suave">Você entra com sua conta Google (<strong>@usuario.Email</strong>). Se você não enviar uma foto personalizada, a foto do Google é sincronizada a cada login.</p>
         <a href="/account/logout" target="_top">🚪 Sair da conta</a>
     </div>
 }
@@ -84,6 +90,34 @@ else
     private UsuarioDto? usuario;
     private PerfilEdicaoDto? modelo;
     private bool salvando;
+    private bool enviandoFoto;
+    private const long TamanhoMaximoFoto = 1024 * 1024;
+
+    private async Task AlterarFoto(InputFileChangeEventArgs e)
+    {
+        var arquivo = e.File;
+        if (arquivo.Size > TamanhoMaximoFoto)
+        {
+            Toast.ShowError("A imagem deve ter no máximo 1 MB.");
+            return;
+        }
+        enviandoFoto = true;
+        try
+        {
+            using var ms = new MemoryStream();
+            await arquivo.OpenReadStream(TamanhoMaximoFoto).CopyToAsync(ms);
+            var img = await Api.AlterarAvatarAsync(ms.ToArray(), arquivo.ContentType);
+            usuario!.AvatarUrl = img.Url;
+            await Sessao.CarregarAsync();
+            Toast.ShowSuccess("Foto atualizada! 📷");
+        }
+        catch (Exception ex)
+        {
+            Toast.Erro(ex);
+        }
+        enviandoFoto = false;
+    }
+
 
     protected override async Task OnInitializedAsync()
     {

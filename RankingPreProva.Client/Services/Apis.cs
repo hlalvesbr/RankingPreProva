@@ -39,6 +39,12 @@ public class UsuariosApi(HttpClient http) : ApiBase(http)
     public Task<UserInfo> AuthAsync() => GetAsync<UserInfo>("api/auth/me");
     public Task<UsuarioDto> MeAsync() => GetAsync<UsuarioDto>("api/usuarios/me");
     public Task AtualizarPerfilAsync(PerfilEdicaoDto dto) => PutAsync("api/usuarios/me", dto);
+    public Task<ImagemEnviadaDto> AlterarAvatarAsync(byte[] bytes, string contentType)
+    {
+        var conteudo = new ByteArrayContent(bytes);
+        conteudo.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(contentType);
+        return PostConteudoAsync<ImagemEnviadaDto>("api/usuarios/me/avatar", conteudo);
+    }
     public Task<DashboardDto> DashboardAsync() => GetAsync<DashboardDto>("api/usuarios/me/dashboard");
     public Task<HistoricoDto> HistoricoAsync() => GetAsync<HistoricoDto>("api/usuarios/me/historico");
     public Task<List<BadgeDto>> BadgesAsync() => GetAsync<List<BadgeDto>>("api/usuarios/me/badges");

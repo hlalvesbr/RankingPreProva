@@ -49,6 +49,12 @@ public static class ApiEndpoints
             await s.AtualizarPerfilAsync(u.UsuarioId(), dto);
             return Results.NoContent();
         });
+        auth.MapPost("/usuarios/me/avatar", (ClaimsPrincipal u, UsuarioService s, ImagemService imagens, HttpRequest req) =>
+        {
+            if (req.ContentLength > ImagemService.TamanhoMaximo)
+                throw new RegraNegocioException("A imagem deve ter no máximo 1 MB.");
+            return s.AlterarAvatarAsync(u.UsuarioId(), req.Body, imagens);
+        }).WithMetadata(new Microsoft.AspNetCore.Mvc.RequestSizeLimitAttribute(ImagemService.TamanhoMaximo + 64 * 1024));
         auth.MapGet("/usuarios/me/dashboard", (ClaimsPrincipal u, UsuarioService s) => s.DashboardAsync(u.UsuarioId()));
         auth.MapGet("/usuarios/me/historico", (ClaimsPrincipal u, UsuarioService s) => s.HistoricoAsync(u.UsuarioId()));
         auth.MapGet("/usuarios/me/badges", (ClaimsPrincipal u, GamificacaoService s) => s.ListarBadgesAsync(u.UsuarioId()));

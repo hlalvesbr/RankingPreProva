@@ -18,7 +18,7 @@ public class UsuarioService(ApplicationDbContext db, IConfiguration config, Gami
         }
 
         usuario.Email = email;
-        if (!string.IsNullOrEmpty(avatarUrl))
+        if (!string.IsNullOrEmpty(avatarUrl) && !EhAvatarPersonalizado(usuario.AvatarUrl))
             usuario.AvatarUrl = avatarUrl;
         usuario.UltimoAcesso = DateTime.UtcNow;
 
@@ -68,6 +68,18 @@ public class UsuarioService(ApplicationDbContext db, IConfiguration config, Gami
     {
         var hoje = Relogio.Hoje();
         return u.UltimaAtividade == hoje || u.UltimaAtividade == hoje.AddDays(-1) ? u.SequenciaDias : 0;
+    }
+
+    private static bool EhAvatarPersonalizado(string? url) =>
+        url is not null && url.StartsWith("/api/imagens/", StringComparison.OrdinalIgnoreCase);
+
+    public async Task<ImagemEnviadaDto> AlterarAvatarAsync(int usuarioId, Stream conteudo, ImagemService imagens)
+    {
+        var u = await db.Usuarios.FindAsync(usuarioId) ?? throw new NaoEncontradoException("Usuário não encontrado.");
+        var img = await imagens.SalvarAsync(conteudo, usuarioId);
+        u.AvatarUrl = img.Url;
+        await db.SaveChangesAsync();
+        return img;
     }
 
     public async Task AtualizarPerfilAsync(int usuarioId, PerfilEdicaoDto dto)
