@@ -38,27 +38,6 @@ namespace RankingPreProva.Server
 			builder.Services.AddScoped<DenunciaService>();
 			builder.Services.AddScoped<ImagemService>();
 
-			// Serviços do Client usados pelos componentes durante a pré-renderização no servidor.
-			builder.Services.AddHttpContextAccessor();
-			builder.Services.AddHttpClient("Prerender");
-			builder.Services.AddScoped(sp =>
-			{
-				var http = sp.GetRequiredService<IHttpClientFactory>().CreateClient("Prerender");
-				var request = sp.GetRequiredService<IHttpContextAccessor>().HttpContext?.Request;
-				if (request is not null)
-				{
-					http.BaseAddress = new Uri($"{request.Scheme}://{request.Host}{request.PathBase}/");
-					if (request.Headers.Cookie.Count > 0)
-						http.DefaultRequestHeaders.Add("Cookie", request.Headers.Cookie.ToString());
-				}
-				return http;
-			});
-			builder.Services.AddScoped<RankingPreProva.Client.Services.QuestoesApi>();
-			builder.Services.AddScoped<RankingPreProva.Client.Services.ImagensApi>();
-			builder.Services.AddScoped<RankingPreProva.Client.Services.ProvasApi>();
-			builder.Services.AddScoped<RankingPreProva.Client.Services.UsuariosApi>();
-			builder.Services.AddScoped<RankingPreProva.Client.Services.ModeracaoApi>();
-			builder.Services.AddScoped<RankingPreProva.Client.Services.SessaoState>();
 			builder.Services.AddFluentUIComponents();
 
 			var app = builder.Build();
