@@ -38,6 +38,10 @@ Site: https://www.rankingpreprova.com
    dotnet user-secrets set "Authentication:Google:ClientSecret" "SEU_CLIENT_SECRET"
    ```
 
+## Anúncios AdCash
+
+A landing page e o dashboard usam as mesmas zonas: banner lateral 160×600 (`12344310`, somente em telas a partir de 1100 px), banner de rodapé 468×60 (`12344662`) e vídeo flutuante (`12344442`). A integração usa `rppAds` em `RankingPreProva.Server\wwwroot\js\rpp.js`; o vídeo é iniciado uma única vez durante a navegação SPA.
+
 ## Moderadores
 
 Os e-mails em `Admin:Emails` recebem o papel de moderador no próximo login e passam a ter acesso a `/admin/denuncias`:

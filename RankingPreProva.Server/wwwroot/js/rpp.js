@@ -161,5 +161,6 @@ window.rppAds = {
         s.type = 'text/javascript';
         s.text = 'aclib.runVideoSlider({ zoneId: ' + JSON.stringify(String(zoneId)) + ' });';
         document.body.appendChild(s);
+        console.log('AdCash video slider iniciado para zoneId ' + zoneId);
     }
 };
