@@ -1,8 +1,6 @@
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
-<div class="landing-layout">
-<div class="landing-conteudo">
 <section class="landing-hero animar-entrada">
     <div>
         <span class="etiqueta etiqueta-primaria">🎯 Para concurseiros de verdade</span>
@@ -56,33 +54,14 @@
     </div>
 </div>
 
-<aside class="anuncio-rodape" aria-label="Publicidade">
-    <div @ref="anuncioRodape" class="anuncio-468x60"></div>
-</aside>
-</div>
-
-<aside class="anuncio-lateral" aria-label="Publicidade">
-    <div @ref="anuncio" class="anuncio-160x600"></div>
-</aside>
-</div>
-
 @code {
-    // Zone IDs dos banners criados no painel do AdCash.
-    private const string AdCashZoneId = "12344310";
-    private const string AdCashZoneIdRodape = "12344662";
+    // Zone ID do slider de vídeo criado no painel do AdCash.
     private const string AdCashZoneIdVideoSlider = "12344442";
-
-    private ElementReference anuncio;
-    private ElementReference anuncioRodape;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
-        {
-            await JS.InvokeVoidAsync("rppAds.banner", anuncio, AdCashZoneId, true);
-            await JS.InvokeVoidAsync("rppAds.banner", anuncioRodape, AdCashZoneIdRodape, false);
             await JS.InvokeVoidAsync("rppAds.videoSlider", AdCashZoneIdVideoSlider);
-        }
     }
 
     private void Entrar() => Navigation.NavigateTo("account/login?returnUrl=%2F", forceLoad: true);

@@ -1,7 +1,6 @@
 @inject UsuariosApi Api
 @inject IToastService Toast
 @inject NavigationManager Navigation
-@inject IJSRuntime JS
 
 @if (dados is null)
 {
@@ -12,8 +11,6 @@ else
     var u = dados.Usuario;
     var metaPct = Math.Min(100, u.MetaDiaria == 0 ? 0 : 100 * dados.RespostasHoje / u.MetaDiaria);
 
-    <div class="dashboard-anuncios">
-    <div class="dashboard-conteudo">
     <div class="dashboard-layout">
     <div class="dashboard-principal">
     <section class="boas-vindas animar-entrada">
@@ -156,58 +153,31 @@ else
         </div>
     }
 
-    <aside class="anuncio-rodape" aria-label="Publicidade">
-        <div @ref="anuncioRodape" class="anuncio-468x60"></div>
-    </aside>
-    </div>
-
-    <aside class="anuncio-lateral" aria-label="Publicidade">
-        <div @ref="anuncio" class="anuncio-160x600"></div>
-    </aside>
-    </div>
-}
-
-@code {
-    private const string AdCashZoneId = "12344310";
-    private const string AdCashZoneIdRodape = "12344662";
-    private const string AdCashZoneIdVideoSlider = "12344442";
-
-    private DashboardDto? dados;
-    private ElementReference anuncio;
-    private ElementReference anuncioRodape;
-    private bool anunciosIniciados;
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (dados is not null && !anunciosIniciados)
-        {
-            anunciosIniciados = true;
-            await JS.InvokeVoidAsync("rppAds.banner", anuncio, AdCashZoneId, true);
-            await JS.InvokeVoidAsync("rppAds.banner", anuncioRodape, AdCashZoneIdRodape, false);
-            await JS.InvokeVoidAsync("rppAds.videoSlider", AdCashZoneIdVideoSlider);
-        }
     }
 
-    protected override async Task OnInitializedAsync()
-    {
-        try
+    @code {
+        private DashboardDto? dados;
+
+        protected override async Task OnInitializedAsync()
         {
-            dados = await Api.DashboardAsync();
+            try
+            {
+                dados = await Api.DashboardAsync();
+            }
+            catch (Exception ex)
+            {
+                Toast.Erro(ex);
+            }
         }
-        catch (Exception ex)
+
+        private static string Saudacao => DateTime.Now.Hour switch
         {
-            Toast.Erro(ex);
-        }
+            < 12 => "Bom dia",
+            < 18 => "Boa tarde",
+            _ => "Boa noite"
+        };
+
+        private static string PrimeiroNome(string nome) => nome.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? nome;
+
+        private static string Taxa(int acertos, int total) => total == 0 ? "0%" : UiExtensions.Pct(100.0 * acertos / total);
     }
-
-    private static string Saudacao => DateTime.Now.Hour switch
-    {
-        < 12 => "Bom dia",
-        < 18 => "Boa tarde",
-        _ => "Boa noite"
-    };
-
-    private static string PrimeiroNome(string nome) => nome.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? nome;
-
-    private static string Taxa(int acertos, int total) => total == 0 ? "0%" : UiExtensions.Pct(100.0 * acertos / total);
-}

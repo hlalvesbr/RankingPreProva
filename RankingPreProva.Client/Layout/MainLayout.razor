@@ -62,19 +62,29 @@
         </nav>
 
         <main class="app-main">
-            <ErrorBoundary @ref="errorBoundary">
-                <ChildContent>
-                    @Body
-                </ChildContent>
-                <ErrorContent>
-                    <div class="estado-vazio">
-                        <div class="estado-icone">😵</div>
-                        <h2>Ops! Algo deu errado.</h2>
-                        <p>Não foi possível exibir esta tela.</p>
-                        <FluentButton Appearance="Appearance.Accent" OnClick="Recuperar">Tentar novamente</FluentButton>
-                    </div>
-                </ErrorContent>
-            </ErrorBoundary>
+            <div class="app-content-layout">
+                <div class="app-content">
+                    <ErrorBoundary @ref="errorBoundary">
+                        <ChildContent>
+                            @Body
+                        </ChildContent>
+                        <ErrorContent>
+                            <div class="estado-vazio">
+                                <div class="estado-icone">😵</div>
+                                <h2>Ops! Algo deu errado.</h2>
+                                <p>Não foi possível exibir esta tela.</p>
+                                <FluentButton Appearance="Appearance.Accent" OnClick="Recuperar">Tentar novamente</FluentButton>
+                            </div>
+                        </ErrorContent>
+                    </ErrorBoundary>
+                    <aside class="anuncio-rodape" aria-label="Publicidade">
+                        <div @ref="anuncioRodape" class="anuncio-468x60"></div>
+                    </aside>
+                </div>
+                <aside class="anuncio-lateral" aria-label="Publicidade">
+                    <div @ref="anuncio" class="anuncio-160x600"></div>
+                </aside>
+            </div>
         </main>
     </div>
 
@@ -91,9 +101,14 @@
 <XpCelebracao />
 
 @code {
+    private const string AdCashZoneId = "12344310";
+    private const string AdCashZoneIdRodape = "12344662";
+
     private string? termoBusca;
     private bool menuAberto;
     private bool buscaAberta;
+    private ElementReference anuncio;
+    private ElementReference anuncioRodape;
 
     private void AlternarMenu() => menuAberto = !menuAberto;
     private ErrorBoundary? errorBoundary;
@@ -112,7 +127,11 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
+        {
             await JS.InvokeVoidAsync("rppFx.pronto");
+            await JS.InvokeVoidAsync("rppAds.banner", anuncio, AdCashZoneId, true);
+            await JS.InvokeVoidAsync("rppAds.banner", anuncioRodape, AdCashZoneIdRodape, false);
+        }
     }
 
     private void Buscar()
