@@ -536,6 +536,19 @@ h1:focus { outline: none; }
 .nav-fundo { display: none; }
 .nav-menu-fluido { width: 250px; }
 
+/* ---------- Anúncio lateral (somente desktop) ---------- */
+.landing-layout { display: grid; grid-template-columns: minmax(0, 1fr) 160px; gap: 24px; align-items: start; }
+.landing-conteudo { min-width: 0; }
+.anuncio-lateral { position: sticky; top: calc(var(--header-altura) + 16px); padding-top: 24px; }
+.anuncio-160x600 { width: 160px; height: 600px; overflow: hidden; }
+.anuncio-rodape { display: flex; justify-content: center; margin: 24px 0; }
+.anuncio-768x90 { width: 768px; max-width: 100%; height: 90px; overflow: hidden; }
+
+@media (max-width: 1099.98px) {
+    .landing-layout { grid-template-columns: minmax(0, 1fr); }
+    .anuncio-lateral { display: none; }
+}
+
 @media (max-width: 768px) {
     :root { --header-altura: 56px; }
     html, body { overflow-x: hidden; }

@@ -139,3 +139,27 @@ window.rppMd = {
         };
     }
 };
+
+// Anúncios AdCash. Scripts escritos em componentes Blazor não executam,
+// então o runBanner é injetado como <script> dentro do contêiner.
+window.rppAds = {
+    banner: function (el, zoneId, somenteDesktop) {
+        if (!el || !zoneId || typeof window.aclib === 'undefined') return;
+        if (somenteDesktop && !window.matchMedia('(min-width: 1100px)').matches) return;
+        el.innerHTML = '';
+        const s = document.createElement('script');
+        s.type = 'text/javascript';
+        s.text = 'aclib.runBanner({ zoneId: ' + JSON.stringify(String(zoneId)) + ' });';
+        el.appendChild(s);
+    },
+    // O slider flutua sobre a página e continua ativo na navegação da SPA, então só é iniciado uma vez.
+    videoSliderIniciado: false,
+    videoSlider: function (zoneId) {
+        if (this.videoSliderIniciado || !zoneId || typeof window.aclib === 'undefined') return;
+        this.videoSliderIniciado = true;
+        const s = document.createElement('script');
+        s.type = 'text/javascript';
+        s.text = 'aclib.runVideoSlider({ zoneId: ' + JSON.stringify(String(zoneId)) + ' });';
+        document.body.appendChild(s);
+    }
+};
