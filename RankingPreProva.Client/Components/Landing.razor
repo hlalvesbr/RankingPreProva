@@ -1,5 +1,4 @@
 @inject NavigationManager Navigation
-@inject IJSRuntime JS
 
 <section class="landing-hero animar-entrada">
     <div>
@@ -55,14 +54,5 @@
 </div>
 
 @code {
-    // Zone ID do slider de vídeo criado no painel do AdCash.
-    private const string AdCashZoneIdVideoSlider = "12344442";
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-            await JS.InvokeVoidAsync("rppAds.videoSlider", AdCashZoneIdVideoSlider);
-    }
-
     private void Entrar() => Navigation.NavigateTo("account/login?returnUrl=%2F", forceLoad: true);
 }

@@ -82,8 +82,8 @@ window.rppMd = {
         const enviar = async (arquivos) => {
             for (const f of arquivos) {
                 if (!f.type.startsWith('image/')) continue;
-                if (!tipos.includes(f.type)) { await dotnet.invokeMethodAsync('ImagemRejeitada', 'Formato não suportado. Use PNG, JPG, GIF ou WebP.'); continue; }
-                if (f.size > 1024 * 1024) { await dotnet.invokeMethodAsync('ImagemRejeitada', 'A imagem deve ter no máximo 1 MB.'); continue; }
+                if (!tipos.includes(f.type)) { await dotnet.invokeMethodAsync('ImagemRejeitada', 'Formato nÃ£o suportado. Use PNG, JPG, GIF ou WebP.'); continue; }
+                if (f.size > 1024 * 1024) { await dotnet.invokeMethodAsync('ImagemRejeitada', 'A imagem deve ter no mÃ¡ximo 1 MB.'); continue; }
                 const bytes = new Uint8Array(await f.arrayBuffer());
                 await dotnet.invokeMethodAsync('ReceberImagem', bytes, f.type);
             }
@@ -140,27 +140,29 @@ window.rppMd = {
     }
 };
 
-// Anúncios AdCash. Scripts escritos em componentes Blazor não executam,
-// então o runBanner é injetado como <script> dentro do contêiner.
+// AnÃºncios AdsTerra. Scripts escritos em componentes Blazor nÃ£o executam,
+// entÃ£o o invoke.js Ã© injetado dentro do contÃªiner. Como ele lÃª a variÃ¡vel
+// global atOptions ao executar, os banners sÃ£o carregados em fila, um de cada vez.
 window.rppAds = {
-    banner: function (el, zoneId, somenteDesktop) {
-        if (!el || !zoneId || typeof window.aclib === 'undefined') return;
+    fila: Promise.resolve(),
+    banner: function (el, opcoes, somenteDesktop) {
+        if (!el || !opcoes || !opcoes.key || !opcoes.src) return;
         if (somenteDesktop && !window.matchMedia('(min-width: 1100px)').matches) return;
         el.innerHTML = '';
-        const s = document.createElement('script');
-        s.type = 'text/javascript';
-        s.text = 'aclib.runBanner({ zoneId: ' + JSON.stringify(String(zoneId)) + ' });';
-        el.appendChild(s);
-    },
-    // O slider flutua sobre a página e continua ativo na navegação da SPA, então só é iniciado uma vez.
-    videoSliderIniciado: false,
-    videoSlider: function (zoneId) {
-        if (this.videoSliderIniciado || !zoneId || typeof window.aclib === 'undefined') return;
-        this.videoSliderIniciado = true;
-        const s = document.createElement('script');
-        s.type = 'text/javascript';
-        s.text = 'aclib.runVideoSlider({ zoneId: ' + JSON.stringify(String(zoneId)) + ' });';
-        document.body.appendChild(s);
-        console.log('AdCash video slider iniciado para zoneId ' + zoneId);
+        this.fila = this.fila.then(() => new Promise(resolve => {
+            if (!el.isConnected) { resolve(); return; }
+            window.atOptions = {
+                'key': opcoes.key,
+                'format': 'iframe',
+                'height': opcoes.height,
+                'width': opcoes.width,
+                'params': {}
+            };
+            const s = document.createElement('script');
+            s.src = opcoes.src;
+            s.onload = s.onerror = () => resolve();
+            setTimeout(resolve, 10000);
+            el.appendChild(s);
+        }));
     }
 };
